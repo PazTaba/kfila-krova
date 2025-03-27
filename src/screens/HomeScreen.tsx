@@ -1,4 +1,3 @@
-// HomeScreen.tsx
 import React, { useState, useEffect } from 'react';
 import {
   View,
@@ -9,6 +8,7 @@ import {
   SafeAreaView,
   Dimensions,
   TouchableWithoutFeedback,
+  ActivityIndicator,
 } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import MapView, { Marker, Callout, Circle } from 'react-native-maps';
@@ -19,8 +19,9 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import Slider from '@react-native-community/slider';
 import { RootStackParamList } from '../navigation/navigation-types';
 import haversine from 'haversine-distance';
+import { updateUserLocation } from '../utils/location';
 
-type HomeScreenProps = NativeStackScreenProps<RootStackParamList, 'Home'>;
+
 type ProductWithLocation = {
   _id: string;
   name: string;
@@ -29,7 +30,7 @@ type ProductWithLocation = {
   image: string;
 };
 
-function HomeScreen({ navigation }: HomeScreenProps): React.JSX.Element {
+function HomeScreen({ navigation }: any): React.JSX.Element {
   const [currentLocation, setCurrentLocation] = useState({
     latitude: 32.0853,
     longitude: 34.7818,
@@ -52,14 +53,23 @@ function HomeScreen({ navigation }: HomeScreenProps): React.JSX.Element {
   useEffect(() => {
     (async () => {
       const { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== 'granted') return;
+      if (status !== 'granted') return; // התנאי נמצא כאן לפני החזרת JSX
+  
       const location = await Location.getCurrentPositionAsync({});
       const { latitude, longitude } = location.coords;
       setCurrentLocation({ latitude, longitude, latitudeDelta: 0.0922, longitudeDelta: 0.0421 });
     })();
-
+  
     fetchProducts();
+  
+    // עדכון מיקום כל 3 דקות
+    const interval = setInterval(() => {
+      updateUserLocation();
+    }, 1000 * 60 * 3); // כל 3 דקות
+  
+    return () => clearInterval(interval); // נוודא שהinterval נעצר כשהמסך לא פעיל
   }, []);
+  
 
   const fetchProducts = async () => {
     try {
@@ -139,6 +149,11 @@ function HomeScreen({ navigation }: HomeScreenProps): React.JSX.Element {
     );
   };
 
+  const handleUpdateLocation = async () => {
+    await updateUserLocation();
+    alert('המיקום עודכן בהצלחה!');
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       <TouchableOpacity style={styles.profileImageContainer} onPress={toggleSidebar}>
@@ -184,6 +199,14 @@ function HomeScreen({ navigation }: HomeScreenProps): React.JSX.Element {
           </Text>
         </View>
       )}
+
+      {/* כפתור לעדכון מיקום */}
+      <TouchableOpacity
+        style={styles.updateLocationButton}
+        onPress={handleUpdateLocation}
+      >
+        <Text style={styles.updateLocationButtonText}>עדכן מיקום</Text>
+      </TouchableOpacity>
 
       {/* כפתור + סליידר */}
       <TouchableOpacity style={styles.radiusButton} onPress={() => setShowRadiusPanel(!showRadiusPanel)}>
@@ -274,6 +297,26 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 6,
     zIndex: 10,
+  },
+
+  // כפתור לעדכון מיקום
+  updateLocationButton: {
+    position: 'absolute',
+    bottom: 50,
+    right: 20,
+    backgroundColor: '#4A90E2',
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 30,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 3,
+    elevation: 5,
+  },
+  updateLocationButtonText: {
+    color: 'white',
+    fontWeight: 'bold',
   }
 });
 

@@ -35,7 +35,13 @@ export default function AddProductScreen({ navigation }: any) {
 
         try {
             const token = await AsyncStorage.getItem('token');
-            const userId = '67e2b91ea2ec4b0166e3a539';
+            const userData = await AsyncStorage.getItem('userData');
+            const userId = userData ? JSON.parse(userData).id : null;
+            if (!userId) {
+                Alert.alert('שגיאה', 'משתמש לא מזוהה');
+                return;
+            }
+            
 
             const location = await Location.getCurrentPositionAsync({});
             const latitude = location.coords.latitude;

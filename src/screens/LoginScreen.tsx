@@ -14,6 +14,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { LoginScreenProps } from "../navigation/navigation-types"
+import { updateUserLocation } from '../utils/location';
 
 // Configuration for API endpoint
 const API_BASE_URL = 'http://172.20.10.3:3000'; // Replace with your server's IP/domain
@@ -49,9 +50,11 @@ function LoginScreen({ navigation }: LoginScreenProps): React.JSX.Element {
 
             if (response.ok) {
                 // Save token and user info
+                await updateUserLocation();
                 await AsyncStorage.setItem('userToken', data.token);
                 await AsyncStorage.setItem('userData', JSON.stringify(data.user));
                 await AsyncStorage.setItem('token', data.token);
+                console.log(data.token)
                 await AsyncStorage.setItem('userId', data.user.id);
 
 

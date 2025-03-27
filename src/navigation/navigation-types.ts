@@ -1,9 +1,6 @@
+// navigation-types.ts
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
 import { RouteProp } from '@react-navigation/native';
-import { StackNavigationProp } from '@react-navigation/stack';
-
-/* ========== API Response & Request Types ========== */
 
 // טיפוס לתגובה מהשרת אחרי התחברות
 export interface LoginResponse {
@@ -17,7 +14,9 @@ export interface LoginResponse {
 
 // טופס הרשמה
 export interface RegisterRequestBody {
+    gender: "male" | "female" | "other";
     name: string;
+    age: number;
     email: string;
     password: string;
     location?: {
@@ -27,54 +26,68 @@ export interface RegisterRequestBody {
     phoneNumber?: string;
 }
 
-/* ========== Consultation Object Type ========== */
-
-export type Consultation = {
+/* ========== Answer Object Type ========== */
+export type Answer = {
     id: string;
+    text: string;
+    author: string;
+    likes?: number;
+    createdAt?: string; // ← חדש
+  };
+  
+
+/* ========== Consultation Object Type ========== */
+export type Consultation = {
+    _id: string;
     question: string;
-    answers: string[];
+    answers: Answer[];
     likes: number;
     category: string;
+    description?: string;
+    location?: {
+        latitude: number;
+        longitude: number;
+    };
+    status?: string;
+    createdAt?: string;
 };
 
-/* ========== Stack Navigation ========== */
 
+/* ========== Stack Navigation ========== */
 export type RootStackParamList = {
     Home: undefined;
-    Profile:undefined;
-    Settings:undefined;
+    Profile: undefined;
+    Settings: undefined;
     Map: undefined;
     Login: undefined;
     Register: undefined;
     MainTabs: undefined;
     AddProduct: undefined;
+    ConsultationStack: undefined;
+    ConsultationDetails: { consultation: Consultation };
+};
+
+/* ========== ConsultationStackParamList ========== */
+export type ConsultationStackParamList = {
+    Consultation: undefined;
+    AddConsultation: undefined;
     ConsultationDetails: { consultation: Consultation };
 };
 
 /* ========== Tab Navigation ========== */
-
 export type MainTabParamList = {
     Home: undefined;
     Marketplace: undefined;
-    Help: undefined;
     Consultation: undefined;
     Jobs: undefined;
     Community: undefined;
 };
 
 /* ========== Screen Props ========== */
-
-// Stack Props
 export type LoginScreenProps = NativeStackScreenProps<RootStackParamList, 'Login'>;
 export type RegisterScreenProps = NativeStackScreenProps<RootStackParamList, 'Register'>;
-export type ConsultationDetailsScreenNavigationProp = StackNavigationProp<
+export type ConsultationDetailsScreenNavigationProp = NativeStackScreenProps<
     RootStackParamList,
     'ConsultationDetails'
 >;
-export type ConsultationDetailsScreenRouteProp = RouteProp<
-    RootStackParamList,
-    'ConsultationDetails'
->;
-
-
-export type HomeTabScreenProps = BottomTabScreenProps<MainTabParamList, 'Home'>;
+export type ConsultationDetailsScreenRouteProp = RouteProp<RootStackParamList, 'ConsultationDetails'>;

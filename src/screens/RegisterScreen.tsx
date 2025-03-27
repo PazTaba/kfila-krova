@@ -9,22 +9,74 @@ import {
     KeyboardAvoidingView,
     Platform,
     Alert,
-    ActivityIndicator
+    ActivityIndicator,
 } from 'react-native';
 
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Location from 'expo-location';
 import { RegisterScreenProps } from '../navigation/navigation-types';
-
 import { RegisterRequestBody } from '../navigation/navigation-types';
 
+const API_BASE_URL = 'http://172.20.10.3:3000';
 
-const API_BASE_URL = 'http://172.20.10.3:3000'; // Replace with your server's IP/domain
+const GenderSelection = ({ 
+    selectedGender, 
+    onGenderChange 
+}: { 
+    selectedGender: 'male' | 'female' | 'other', 
+    onGenderChange: (gender: 'male' | 'female' | 'other') => void 
+}) => {
+    const genderOptions = [
+        { 
+            value: 'male', 
+            label: 'זכר', 
+            icon: 'male' 
+        },
+        { 
+            value: 'female', 
+            label: 'נקבה', 
+            icon: 'female' 
+        },
+        { 
+            value: 'other', 
+            label: 'אחר', 
+            icon: 'transgender' 
+        }
+    ];
 
-// Extend the existing RootStackParamList type
-
-
+    return (
+        <View style={styles.genderContainer}>
+            {/* <Text style={styles.genderLabel}>מגדר</Text> */}
+            <View style={styles.genderButtonGroup}>
+                {genderOptions.map((gender) => (
+                    <TouchableOpacity
+                        key={gender.value}
+                        style={[
+                            styles.genderButton,
+                            selectedGender === gender.value && styles.selectedGenderButton
+                        ]}
+                        onPress={() => onGenderChange(gender.value as 'male' | 'female' | 'other')}
+                    >
+                        <Ionicons 
+                            name={`${gender.icon}-outline`} 
+                            size={24} 
+                            color={selectedGender === gender.value ? 'white' : '#007BFF'}
+                        />
+                        <Text 
+                            style={[
+                                styles.genderButtonText,
+                                selectedGender === gender.value && styles.selectedGenderButtonText
+                            ]}
+                        >
+                            {gender.label}
+                        </Text>
+                    </TouchableOpacity>
+                ))}
+            </View>
+        </View>
+    );
+};
 
 function RegisterScreen({ navigation }: RegisterScreenProps): React.JSX.Element {
     const [name, setName] = useState('');
@@ -32,233 +84,128 @@ function RegisterScreen({ navigation }: RegisterScreenProps): React.JSX.Element 
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
     const [phoneNumber, setPhoneNumber] = useState('');
+    const [age, setAge] = useState('');
+    const [gender, setGender] = useState<'male' | 'female' | 'other'>('other');
     const [isPasswordVisible, setIsPasswordVisible] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
 
     const handleRegister = async () => {
-        // Log registration attempt start
-        console.log('🚀 Registration Attempt Started:', {
-            email,
-            nameLength: name.length,
-            hasPhoneNumber: !!phoneNumber,
-            timestamp: new Date().toISOString()
-        });
-
-        // Basic validation
-        if (!name || !email || !password || !confirmPassword) {
-            console.warn('⚠️ Registration Validation Failed: Missing Fields');
-            Alert.alert('Error', 'Please fill in all fields');
+        if (!name || !email || !password || !confirmPassword || !age || !gender) {
+            Alert.alert('שגיאה', 'יש למלא את כל השדות החובה');
             return;
         }
 
         if (password !== confirmPassword) {
-            console.warn('⚠️ Registration Validation Failed: Passwords Do Not Match');
-            Alert.alert('Error', 'Passwords do not match');
+            Alert.alert('שגיאה', 'הסיסמאות אינן תואמות');
             return;
         }
 
         setIsLoading(true);
 
         try {
-            // Location permission logging
-            console.log('🌍 Requesting Location Permissions');
             const { status } = await Location.requestForegroundPermissionsAsync();
 
             let location;
             if (status === 'granted') {
-                console.log('✅ Location Permissions Granted');
                 const locationResult = await Location.getCurrentPositionAsync({});
                 location = {
                     latitude: locationResult.coords.latitude,
                     longitude: locationResult.coords.longitude
                 };
-                console.log('📍 User Location Captured:', {
-                    latitude: location.latitude,
-                    longitude: location.longitude
-                });
-            } else {
-                console.warn('⚠️ Location Permissions Denied');
             }
 
-            // Prepare registration data
             const registrationData: RegisterRequestBody = {
                 name,
                 email,
                 password,
                 location,
-                phoneNumber
+                phoneNumber,
+                gender,
+                age: parseInt(age)
             };
-
-            console.log('📤 Sending Registration Request', {
-                email,
-                hasLocation: !!location,
-                hasPhoneNumber: !!phoneNumber
-            });
 
             const response = await fetch(`${API_BASE_URL}/register`, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(registrationData),
             });
 
             const data = await response.json();
 
             if (response.ok) {
-                console.log('✅ Registration Successful', {
-                    userId: data.user?.id,
-                    email: data.user?.email,
-                    timestamp: new Date().toISOString()
-                });
-
-                // Save token and user info
                 await AsyncStorage.setItem('userToken', data.token);
                 await AsyncStorage.setItem('userData', JSON.stringify(data.user));
 
-                Alert.alert('Registration', 'Registration successful', [
-                    {
-                        text: 'OK',
-                        onPress: () => {
-                            console.log('🔐 Navigating to Login Screen');
-                            navigation.replace('Login');
-                        }
-                    }
+                Alert.alert('הרשמה', 'נרשמת בהצלחה', [
+                    { text: 'OK', onPress: () => navigation.replace('Login') }
                 ]);
             } else {
-                console.error('❌ Registration Failed', {
-                    errorMessage: data.message,
-                    serverResponse: data
-                });
-
-                Alert.alert('Error', data.message || 'Registration failed');
+                Alert.alert('שגיאה', data.message || 'שגיאת שרת');
             }
         } catch (error) {
-            console.error('🚨 Registration Error', {
-                errorMessage: error instanceof Error ? error.message : 'Unknown error',
-                errorStack: error instanceof Error ? error.stack : '',
-                timestamp: new Date().toISOString()
-            });
-
-            Alert.alert('Error', 'Communication problem with the server');
+            Alert.alert('שגיאה', 'תקלה בתקשורת עם השרת');
         } finally {
             setIsLoading(false);
-            console.log('🏁 Registration Process Completed');
         }
     };
 
     return (
         <SafeAreaView style={styles.container}>
-            <KeyboardAvoidingView
-                behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-                style={styles.container}
-            >
+            <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.container}>
                 <View style={styles.loginContainer}>
                     <Text style={styles.title}>הרשמה</Text>
 
-                    <View style={styles.inputContainer}>
-                        <Ionicons
-                            name="person-outline"
-                            size={24}
-                            color="#666"
-                            style={styles.inputIcon}
-                        />
-                        <TextInput
-                            placeholder="שם מלא"
-                            placeholderTextColor="#666"
-                            style={styles.input}
-                            value={name}
-                            onChangeText={setName}
-                            textAlign="right"
-                        />
-                    </View>
+                    <Input 
+                        icon="person-outline" 
+                        placeholder="שם מלא" 
+                        value={name} 
+                        onChangeText={setName} 
+                    />
+                    <Input 
+                        icon="mail-outline" 
+                        placeholder="דואל" 
+                        value={email} 
+                        onChangeText={setEmail} 
+                        keyboardType="email-address" 
+                    />
+                    <Input 
+                        icon="call-outline" 
+                        placeholder="טלפון (אופציונלי)" 
+                        value={phoneNumber} 
+                        onChangeText={setPhoneNumber} 
+                        keyboardType="phone-pad" 
+                    />
+                    <Input 
+                        icon="calendar-outline" 
+                        placeholder="גיל" 
+                        value={age} 
+                        onChangeText={setAge} 
+                        keyboardType="numeric" 
+                    />
 
-                    <View style={styles.inputContainer}>
-                        <Ionicons
-                            name="mail-outline"
-                            size={24}
-                            color="#666"
-                            style={styles.inputIcon}
-                        />
-                        <TextInput
-                            placeholder="דואל"
-                            placeholderTextColor="#666"
-                            style={styles.input}
-                            value={email}
-                            onChangeText={setEmail}
-                            keyboardType="email-address"
-                            autoCapitalize="none"
-                            textAlign="right"
-                        />
-                    </View>
+                    <GenderSelection 
+                        selectedGender={gender}
+                        onGenderChange={setGender}
+                    />
 
-                    <View style={styles.inputContainer}>
-                        <Ionicons
-                            name="call-outline"
-                            size={24}
-                            color="#666"
-                            style={styles.inputIcon}
-                        />
-                        <TextInput
-                            placeholder="מספר טלפון (אופציונלי)"
-                            placeholderTextColor="#666"
-                            style={styles.input}
-                            value={phoneNumber}
-                            onChangeText={setPhoneNumber}
-                            keyboardType="phone-pad"
-                            textAlign="right"
-                        />
-                    </View>
+                    <PasswordInput
+                        placeholder="סיסמה"
+                        value={password}
+                        onChangeText={setPassword}
+                        visible={isPasswordVisible}
+                        toggleVisibility={() => setIsPasswordVisible(!isPasswordVisible)}
+                    />
+                    <PasswordInput
+                        placeholder="אימות סיסמה"
+                        value={confirmPassword}
+                        onChangeText={setConfirmPassword}
+                        visible={isPasswordVisible}
+                        toggleVisibility={() => setIsPasswordVisible(!isPasswordVisible)}
+                    />
 
-                    <View style={styles.inputContainer}>
-                        <Ionicons
-                            name="lock-closed-outline"
-                            size={24}
-                            color="#666"
-                            style={styles.inputIcon}
-                        />
-                        <TextInput
-                            placeholder="סיסמה"
-                            placeholderTextColor="#666"
-                            style={styles.input}
-                            value={password}
-                            onChangeText={setPassword}
-                            secureTextEntry={!isPasswordVisible}
-                            textAlign="right"
-                        />
-                        <TouchableOpacity
-                            onPress={() => setIsPasswordVisible(!isPasswordVisible)}
-                            style={styles.showPasswordButton}
-                        >
-                            <Ionicons
-                                name={isPasswordVisible ? "eye-off-outline" : "eye-outline"}
-                                size={24}
-                                color="#666"
-                            />
-                        </TouchableOpacity>
-                    </View>
-
-                    <View style={styles.inputContainer}>
-                        <Ionicons
-                            name="lock-closed-outline"
-                            size={24}
-                            color="#666"
-                            style={styles.inputIcon}
-                        />
-                        <TextInput
-                            placeholder="אימות סיסמה"
-                            placeholderTextColor="#666"
-                            style={styles.input}
-                            value={confirmPassword}
-                            onChangeText={setConfirmPassword}
-                            secureTextEntry={!isPasswordVisible}
-                            textAlign="right"
-                        />
-                    </View>
-
-                    <TouchableOpacity
-                        style={styles.loginButton}
-                        onPress={handleRegister}
+                    <TouchableOpacity 
+                        style={styles.loginButton} 
+                        onPress={handleRegister} 
                         disabled={isLoading}
                     >
                         {isLoading ? (
@@ -280,23 +227,35 @@ function RegisterScreen({ navigation }: RegisterScreenProps): React.JSX.Element 
     );
 }
 
+const Input = ({ icon, ...props }: { icon: string } & TextInput['props']) => (
+    <View style={styles.inputContainer}>
+        <Ionicons name={icon as any} size={24} color="#666" style={styles.inputIcon} />
+        <TextInput style={styles.input} placeholderTextColor="#666" textAlign="right" {...props} />
+    </View>
+);
+
+const PasswordInput = ({ placeholder, value, onChangeText, visible, toggleVisibility }: any) => (
+    <View style={styles.inputContainer}>
+        <Ionicons name="lock-closed-outline" size={24} color="#666" style={styles.inputIcon} />
+        <TextInput
+            placeholder={placeholder}
+            placeholderTextColor="#666"
+            style={styles.input}
+            value={value}
+            onChangeText={onChangeText}
+            secureTextEntry={!visible}
+            textAlign="right"
+        />
+        <TouchableOpacity onPress={toggleVisibility} style={styles.showPasswordButton}>
+            <Ionicons name={visible ? "eye-off-outline" : "eye-outline"} size={24} color="#666" />
+        </TouchableOpacity>
+    </View>
+);
+
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        backgroundColor: '#F5F5F5',
-    },
-    loginContainer: {
-        flex: 1,
-        justifyContent: 'center',
-        paddingHorizontal: 30,
-    },
-    title: {
-        fontSize: 24,
-        fontWeight: 'bold',
-        textAlign: 'center',
-        marginBottom: 30,
-        color: '#333',
-    },
+    container: { flex: 1, backgroundColor: '#F5F5F5' },
+    loginContainer: { flex: 1, justifyContent: 'center', paddingHorizontal: 30 },
+    title: { fontSize: 24, fontWeight: 'bold', textAlign: 'center', marginBottom: 30, color: '#333' },
     inputContainer: {
         flexDirection: 'row-reverse',
         alignItems: 'center',
@@ -309,18 +268,9 @@ const styles = StyleSheet.create({
         shadowRadius: 3.84,
         elevation: 3,
     },
-    inputIcon: {
-        paddingHorizontal: 10,
-    },
-    input: {
-        flex: 1,
-        height: 50,
-        paddingHorizontal: 10,
-        fontSize: 16,
-    },
-    showPasswordButton: {
-        paddingHorizontal: 10,
-    },
+    inputIcon: { paddingHorizontal: 10 },
+    input: { flex: 1, height: 50, paddingHorizontal: 10, fontSize: 16 },
+    showPasswordButton: { paddingHorizontal: 10 },
     loginButton: {
         backgroundColor: '#007BFF',
         borderRadius: 10,
@@ -329,23 +279,54 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         marginTop: 20,
     },
-    loginButtonText: {
-        color: 'white',
-        fontSize: 18,
-        fontWeight: 'bold',
+    loginButtonText: { color: 'white', fontSize: 18, fontWeight: 'bold' },
+    registerContainer: { flexDirection: 'row-reverse', justifyContent: 'center', marginTop: 20 },
+    registerPrompt: { marginLeft: 5, color: '#666' },
+    registerText: { color: '#007BFF', fontWeight: 'bold' },
+    
+    // New gender selection styles
+    genderContainer: {
+        marginBottom: 15,
+        backgroundColor: 'white',
+        borderRadius: 10,
+        padding: 15,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 3.84,
+        elevation: 3,
     },
-    registerContainer: {
+    genderLabel: {
+        fontSize: 16,
+        color: '#333',
+        marginBottom: 10,
+        textAlign: 'right',
+    },
+    genderButtonGroup: {
         flexDirection: 'row-reverse',
-        justifyContent: 'center',
-        marginTop: 20,
+        justifyContent: 'space-between',
     },
-    registerPrompt: {
-        marginLeft: 5,
-        color: '#666',
+    genderButton: {
+        flexDirection: 'row-reverse',
+        alignItems: 'center',
+        backgroundColor: 'white',
+        borderWidth: 1,
+        borderColor: '#007BFF',
+        borderRadius: 8,
+        paddingVertical: 10,
+        paddingHorizontal: 15,
+        width: '30%',
     },
-    registerText: {
+    selectedGenderButton: {
+        backgroundColor: '#007BFF',
+    },
+    genderButtonText: {
+        marginRight: 5,
         color: '#007BFF',
         fontWeight: 'bold',
+    },
+    selectedGenderButtonText: {
+        color: 'white',
     },
 });
 

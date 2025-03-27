@@ -10,6 +10,7 @@ import MainTabNavigator from './src/navigation/MainTabNavigator';
 import MapScreen from './src/screens/MapScreen';
 import { LoginScreen } from './src/screens/LoginScreen';
 import { RegisterScreen } from './src/screens/RegisterScreen';
+import { startBackgroundLocationUpdates } from './src/utils/backgroundLocation';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
@@ -22,6 +23,10 @@ export default function App() {
       try {
         const token = await AsyncStorage.getItem('token');
         setInitialRoute(token ? 'MainTabs' : 'Login');
+
+        if (token) {
+          await startBackgroundLocationUpdates(); // ✅ נקרא רק אם יש התחברות
+        }
       } catch (err) {
         console.error('Failed to read token', err);
         setInitialRoute('Login');

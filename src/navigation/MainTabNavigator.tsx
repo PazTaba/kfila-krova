@@ -1,15 +1,13 @@
 import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
-
-// מסכים
 import HomeScreen from '../screens/HomeScreen';
 import MarketplaceScreen from '../screens/MarketplaceScreen';
-import ConsultationScreen from '../screens/ConsultationScreen';
+import ConsultationScreen from '../screens/ConsultationScreen'; // כאן אתה יכול להוסיף את מסך הייעוץ
 import JobsScreen from '../screens/JobsScreen';
 import CommunityScreen from '../screens/CommunityScreen';
+import ConsultationStack from './ConsultationStack';
 import MarketplaceStack from './MarketplaceStack';
-
 
 const Tab = createBottomTabNavigator();
 
@@ -35,9 +33,6 @@ export default function MainTabNavigator() {
                         case 'Marketplace':
                             iconName = 'cart-outline';
                             break;
-                        case 'Help':
-                            iconName = 'help-buoy-outline';
-                            break;
                         case 'Consultation':
                             iconName = 'chatbox-ellipses-outline';
                             break;
@@ -55,12 +50,11 @@ export default function MainTabNavigator() {
                 },
             })}
         >
-            <Tab.Screen name="Home" component={HomeScreen} options={{ title: 'Home' }} />
-            <Tab.Screen name="Marketplace" component={MarketplaceStack} options={{ title: 'Marketplace' }} />
-            <Tab.Screen name="Consultation" component={ConsultationScreen} options={{ title: 'Consultation' }} />
-            <Tab.Screen name="Jobs" component={JobsScreen} options={{ title: 'Jobs' }} />
-            <Tab.Screen name="Community" component={CommunityScreen} options={{ title: 'Community' }} />
-            
+            <Tab.Screen name="Home" component={HomeScreen} />
+            <Tab.Screen name="Marketplace" component={MarketplaceStack} />
+            <Tab.Screen name="Consultation" component={ConsultationStack} />
+            <Tab.Screen name="Jobs" component={JobsScreen} />
+            <Tab.Screen name="Community" component={CommunityScreen} />
         </Tab.Navigator>
     );
 }
