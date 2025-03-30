@@ -8,6 +8,7 @@ import JobsScreen from '../screens/JobsScreen';
 import CommunityScreen from '../screens/CommunityScreen';
 import ConsultationStack from './ConsultationStack';
 import MarketplaceStack from './MarketplaceStack';
+import SlideHomeStack from './SlideHomeStack';
 
 const Tab = createBottomTabNavigator();
 
@@ -50,7 +51,7 @@ export default function MainTabNavigator() {
                 },
             })}
         >
-            <Tab.Screen name="Home" component={HomeScreen} />
+            <Tab.Screen name="Home" component={SlideHomeStack} />
             <Tab.Screen name="Marketplace" component={MarketplaceStack} />
             <Tab.Screen name="Consultation" component={ConsultationStack} />
             <Tab.Screen name="Jobs" component={JobsScreen} />

@@ -1,42 +1,26 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import { View, Text, StyleSheet, Image } from 'react-native';
 import MapView, { Marker, Callout, Region } from 'react-native-maps';
-
-type MarkerData = {
-    id: string;
-    title: string;
-    description: string;
-    image: string;
-    latitude: number;
-    longitude: number;
-};
-
-const markers: MarkerData[] = [
-    {
-        id: '1',
-        title: 'ספה למכירה',
-        description: '150 ש"ח, במצב מצוין',
-        image: 'https://example.com/sofa.jpg',
-        latitude: 32.0853,
-        longitude: 34.7818,
-    },
-    {
-        id: '2',
-        title: 'עזרה במחשב',
-        description: 'תיקון מהיר, ללא תשלום',
-        image: 'https://example.com/computer_help.jpg',
-        latitude: 32.0821,
-        longitude: 34.7745,
-    },
-];
+import { useProducts } from '../hooks/useProducts';
+import { useLocation } from '../hooks/useLocation';
+import { useFocusEffect } from '@react-navigation/native';
 
 const MapScreen = () => {
+    const { products, fetchProducts } = useProducts();
+    const { location } = useLocation();
+
     const initialRegion: Region = {
-        latitude: 32.0853,
-        longitude: 34.7818,
+        latitude: location?.latitude || 32.0853,
+        longitude: location?.longitude || 34.7818,
         latitudeDelta: 0.01,
         longitudeDelta: 0.01,
     };
+
+    useFocusEffect(
+        useCallback(() => {
+            fetchProducts();
+        }, [])
+    );
 
     return (
         <View style={styles.container}>
@@ -45,19 +29,19 @@ const MapScreen = () => {
                 initialRegion={initialRegion}
                 showsUserLocation
             >
-                {markers.map(marker => (
+                {products.map(product => (
                     <Marker
-                        key={marker.id}
+                        key={product._id}
                         coordinate={{
-                            latitude: marker.latitude,
-                            longitude: marker.longitude,
+                            latitude: product.latitude,
+                            longitude: product.longitude,
                         }}
                     >
                         <Callout tooltip>
                             <View style={styles.callout}>
-                                <Image source={{ uri: marker.image }} style={styles.image} />
-                                <Text style={styles.title}>{marker.title}</Text>
-                                <Text style={styles.description}>{marker.description}</Text>
+                                <Image source={{ uri: `http://172.20.10.3:3000${product.image}` }} style={styles.image} />
+                                <Text style={styles.title}>{product.name}</Text>
+                                <Text style={styles.description}>₪{product.price} - {product.address}</Text>
                             </View>
                         </Callout>
                     </Marker>
@@ -68,6 +52,7 @@ const MapScreen = () => {
 };
 
 export default MapScreen;
+
 
 const styles = StyleSheet.create({
     container: {
@@ -97,5 +82,6 @@ const styles = StyleSheet.create({
     description: {
         fontSize: 14,
         color: '#666',
+        textAlign: 'center',
     },
 });

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import {
     View,
     Text,
@@ -6,39 +6,48 @@ import {
     Image,
     TouchableOpacity,
     SafeAreaView,
-    ScrollView
+    ScrollView,
+    ActivityIndicator,
 } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
 import { RootStackParamList } from '../navigation/navigation-types';
-
+import { useUser } from '../hooks/useUser';
+import { useLocation } from '../hooks/useLocation';
+import { format } from 'date-fns';
+import {he} from 'date-fns/locale/he';
 
 
 type ProfileScreenProps = NativeStackScreenProps<RootStackParamList, 'Profile'>;
 
 function ProfileScreen({ navigation }: ProfileScreenProps): React.JSX.Element {
-    const [user] = useState({
-        name: 'ישראל ישראלי',
-        profileImage: 'https://example.com/profile.jpg',
-        email: 'israel@example.com',
-        phone: '054-1234567',
-        address: 'תל אביב, ישראל',
-        joinDate: '01/01/2023'
-    });
+    const { user } = useUser();
+    const { location } = useLocation();
+
+    if (!user) {
+        return (
+            <SafeAreaView style={styles.container}>
+                <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+                    <ActivityIndicator size="large" color="#007bff" />
+                </View>
+            </SafeAreaView>
+        );
+    }
+
+    const registrationDate = user.registrationDate
+        ? format(new Date(user.registrationDate), 'dd/MM/yyyy', { locale: he })
+        : 'לא זמין';
 
     return (
         <SafeAreaView style={styles.container}>
-            <TouchableOpacity
-                style={styles.backButton}
-                onPress={() => navigation.goBack()}
-            >
+            <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
                 <Ionicons name="arrow-back" size={24} color="#000" />
             </TouchableOpacity>
 
             <ScrollView contentContainerStyle={styles.scrollContainer}>
                 <View style={styles.profileHeader}>
                     <Image
-                        source={{ uri: user.profileImage }}
+                        source={{ uri: user.profileImage || 'https://via.placeholder.com/150' }}
                         style={styles.profileImage}
                     />
                     <Text style={styles.userName}>{user.name}</Text>
@@ -47,17 +56,32 @@ function ProfileScreen({ navigation }: ProfileScreenProps): React.JSX.Element {
 
                 <View style={styles.profileSection}>
                     <Text style={styles.sectionTitle}>פרטים אישיים</Text>
+
                     <View style={styles.profileItem}>
                         <Ionicons name="call" size={20} color="#666" />
-                        <Text style={styles.profileItemText}>{user.phone}</Text>
+                        <Text style={styles.profileItemText}>{user.phoneNumber || 'טלפון לא זמין'}</Text>
                     </View>
-                    <View style={styles.profileItem}>
-                        <Ionicons name="location" size={20} color="#666" />
-                        <Text style={styles.profileItemText}>{user.address}</Text>
-                    </View>
+
                     <View style={styles.profileItem}>
                         <Ionicons name="calendar" size={20} color="#666" />
-                        <Text style={styles.profileItemText}>תאריך הצטרפות: {user.joinDate}</Text>
+                        <Text style={styles.profileItemText}>תאריך הצטרפות: {registrationDate}</Text>
+                    </View>
+
+                    <View style={styles.profileItem}>
+                        <Ionicons name="person" size={20} color="#666" />
+                        <Text style={styles.profileItemText}>מין: {user.gender === 'male' ? 'זכר' : user.gender === 'female' ? 'נקבה' : 'אחר'}</Text>
+                    </View>
+
+                    <View style={styles.profileItem}>
+                        <Ionicons name="fitness" size={20} color="#666" />
+                        <Text style={styles.profileItemText}>גיל: {user.age ?? 'לא זמין'}</Text>
+                    </View>
+
+                    <View style={styles.profileItem}>
+                        <Ionicons name="location" size={20} color="#666" />
+                        <Text style={styles.profileItemText}>
+                            מיקום נוכחי: {location ? `${location.latitude.toFixed(4)}, ${location.longitude.toFixed(4)}` : 'לא זמין'}
+                        </Text>
                     </View>
                 </View>
 
@@ -81,7 +105,7 @@ const styles = StyleSheet.create({
     },
     backButton: {
         position: 'absolute',
-        top: 20,
+        top: 100,
         left: 20,
         zIndex: 10,
     },

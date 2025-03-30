@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';  // הוספת useEffect
 import {
     View,
     Text,
@@ -18,6 +18,19 @@ export default function AddConsultationScreen() {
     const [category, setCategory] = useState('');
     const [description, setDescription] = useState('');
     const [isLoading, setIsLoading] = useState(false);
+    const [userName, setUserName] = useState<string>('');  // הוספת שדה userName
+
+    // קבלת שם המשתמש מ-AsyncStorage בטעינת המסך
+    useEffect(() => {
+        const getUserData = async () => {
+            const userData = await AsyncStorage.getItem('userData');
+            if (userData) {
+                const user = JSON.parse(userData);
+                setUserName(user.name || 'משתמש אנונימי');
+            }
+        };
+        getUserData();
+    }, []);
 
     const handleAddConsultation = async () => {
         const userId = await AsyncStorage.getItem('userId');
@@ -43,6 +56,7 @@ export default function AddConsultationScreen() {
                         latitude: 0,
                         longitude: 0,
                     },
+                    author: userName,  // שימוש בשם המשתמש כ-author
                 }),
             });
 
@@ -60,7 +74,6 @@ export default function AddConsultationScreen() {
             setIsLoading(false);
         }
     };
-
     return (
         <View style={styles.container}>
             <View style={styles.header}>

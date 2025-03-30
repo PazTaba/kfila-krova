@@ -17,6 +17,8 @@ import {
     ConsultationDetailsScreenNavigationProp,
     Answer,
 } from '../navigation/navigation-types';
+import { RegisterRequestBody } from '../types/User';
+
 
 export default function ConsultationDetailsScreen() {
     const route = useRoute<ConsultationDetailsScreenRouteProp>();
@@ -24,9 +26,10 @@ export default function ConsultationDetailsScreen() {
     const { consultation } = route.params;
 
     const [newAnswer, setNewAnswer] = useState('');
-    const [answers, setAnswers] = useState<Answer[]>(consultation.answers || []); // מחזיק את כל התשובות
+    const [answers, setAnswers] = useState<Answer[]>(consultation.answers || []);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [userName, setUserName] = useState<string>('');
+    const [isLiking, setIsLiking] = useState<{[key: string]: boolean}>({});  // להצגת מצב טעינה ללייקים
 
     useEffect(() => {
         const getUserData = async () => {
@@ -53,7 +56,7 @@ export default function ConsultationDetailsScreen() {
                     text: newAnswer,
                     author: userName,
                     createdAt: new Date().toISOString(),
-                    likes: 0, // Start with 0 likes
+                    likes: 0,
                 }),
             });
 
@@ -70,6 +73,39 @@ export default function ConsultationDetailsScreen() {
             Alert.alert('שגיאה', 'אירעה שגיאה בשרת');
         } finally {
             setIsSubmitting(false);
+        }
+    };
+
+    // פונקציה חדשה לטיפול בלייקים
+    const handleLike = async (answerId: string) => {
+        // עדכון מצב הטעינה ללייק הספציפי
+        setIsLiking(prev => ({ ...prev, [answerId]: true }));
+        
+        try {
+            const response = await fetch(`http://172.20.10.3:3000/consultations/${consultation._id}/answers/${answerId}/like`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                // עדכון ה-state המקומי
+                setAnswers(prev => prev.map(answer => 
+                    answer.id === answerId 
+                        ? { ...answer, likes: (answer.likes || 0) + 1 } 
+                        : answer
+                ));
+            } else {
+                Alert.alert('שגיאה', data.message || 'אירעה שגיאה בעדכון הלייקים');
+            }
+        } catch (error) {
+            console.error('❌ שגיאה בעדכון לייקים:', error);
+            Alert.alert('שגיאה', 'אירעה שגיאה בשרת בעת עדכון הלייקים');
+        } finally {
+            setIsLiking(prev => ({ ...prev, [answerId]: false }));
         }
     };
 
@@ -107,10 +143,18 @@ export default function ConsultationDetailsScreen() {
                             ]}
                         >
                             <View style={styles.answerCardHeader}>
-                                <View style={styles.answerLikesContainer}>
-                                    <Feather name="thumbs-up" size={16} color="#4A90E2" />
+                                <TouchableOpacity 
+                                    style={styles.answerLikesContainer}
+                                    onPress={() => handleLike(answer.id)}
+                                    disabled={isLiking[answer.id]}
+                                >
+                                    <Feather 
+                                        name={isLiking[answer.id] ? "loader" : "thumbs-up"}
+                                        size={16} 
+                                        color="#4A90E2" 
+                                    />
                                     <Text style={styles.answerLikesText}>{answer.likes || 0}</Text>
-                                </View>
+                                </TouchableOpacity>
                                 {index === 0 && (
                                     <Feather 
                                         name="check-circle" 

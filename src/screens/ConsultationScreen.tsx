@@ -58,14 +58,20 @@ export default function ConsultationScreen() {
             }
 
             const processedConsultations: Consultation[] = data.map((consultation: any) => {
-                const sortedAnswers = (consultation.answers || [])
+                // שומר את כל התשובות במקור כדי לשלוח אותן לדף הפרטים
+                const allAnswers = consultation.answers || [];
+                
+                // מסדר את התשובות לפי לייקים ולוקח רק את שתי התשובות עם הכי הרבה לייקים עבור התצוגה
+                const topTwoAnswers = [...allAnswers]
                   .sort((a: any, b: any) => (b.likes || 0) - (a.likes || 0))
-                //   .slice(0, 2);
+                  .slice(0, 2);
+                
                 return {
                   ...consultation,
-                  answers: sortedAnswers
+                  answers: topTwoAnswers,  // לתצוגה בעמוד הראשי
+                  allAnswers: allAnswers   // לשליחה לעמוד הפרטים
                 };
-              });
+            });
               
             setConsultations(processedConsultations);
             setError(null);
@@ -83,7 +89,13 @@ export default function ConsultationScreen() {
     }, []);
 
     const openConsultationDetails = (consultation: Consultation) => {
-        navigation.navigate('ConsultationDetails', { consultation }); // שולח את כל התשובות
+        // שולח את כל התשובות לדף הפרטים 
+        navigation.navigate('ConsultationDetails', { 
+            consultation: {
+                ...consultation,
+                answers: consultation.answers || consultation.answers // שולח את כל התשובות
+            } 
+        });
     };
     
 
@@ -132,39 +144,41 @@ export default function ConsultationScreen() {
                 />
             </View>
 
-            <ScrollView
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={styles.categoriesContainer}
-                style={styles.categoriesScrollContainer}
-            >
-                {CONSULTATION_CATEGORIES.map((category) => {
-                    const isSelected = selectedCategory === category.id;
-                    return (
-                        <TouchableOpacity
-                            key={category.id}
-                            style={[
-                                styles.categoryButton,
-                                { backgroundColor: isSelected ? category.color : '#f4f4f4' }
-                            ]}
-                            onPress={() => setSelectedCategory(category.id)}
-                        >
-                            <View style={styles.categoryContent}>
-                                <Text style={styles.categoryIcon}>{category.icon}</Text>
-                                <Text
-                                    style={[
-                                        styles.categoryName,
-                                        { color: isSelected ? '#fff' : '#4A4A4A' }
-                                    ]}
-                                    numberOfLines={1}
-                                >
-                                    {category.name}
-                                </Text>
-                            </View>
-                        </TouchableOpacity>
-                    );
-                })}
-            </ScrollView>
+            <View style={styles.categoriesWrapper}>
+                <ScrollView
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    contentContainerStyle={styles.categoriesContainer}
+                    style={styles.categoriesScrollContainer}
+                >
+                    {CONSULTATION_CATEGORIES.map((category) => {
+                        const isSelected = selectedCategory === category.id;
+                        return (
+                            <TouchableOpacity
+                                key={category.id}
+                                style={[
+                                    styles.categoryButton,
+                                    { backgroundColor: isSelected ? category.color : '#f4f4f4' }
+                                ]}
+                                onPress={() => setSelectedCategory(category.id)}
+                            >
+                                <View style={styles.categoryContent}>
+                                    <Text style={styles.categoryIcon}>{category.icon}</Text>
+                                    <Text
+                                        style={[
+                                            styles.categoryName,
+                                            { color: isSelected ? '#fff' : '#4A4A4A' }
+                                        ]}
+                                        numberOfLines={1}
+                                    >
+                                        {category.name}
+                                    </Text>
+                                </View>
+                            </TouchableOpacity>
+                        );
+                    })}
+                </ScrollView>
+            </View>
 
             {filteredConsultations.length === 0 ? (
                 <View style={styles.emptyStateContainer}>
@@ -190,9 +204,10 @@ export default function ConsultationScreen() {
 
                             <View style={styles.cardFooter}>
                                 <View style={styles.metadataContainer}>
-                                    <Text style={styles.creatorText}>{consultation.creator}</Text>
+                                    <Text style={styles.creatorText}>{consultation.author}</Text>
                                     <Text style={styles.dateText}>
-                                        {formatDate(consultation.createdAt)}
+                                        
+                                        {formatDate(consultation.createdAt ?? "")}
                                     </Text>
                                 </View>
                             </View>
@@ -295,6 +310,12 @@ const styles = StyleSheet.create({
         color: '#2D3748',
         textAlign: 'right',
     },
+    categoriesWrapper: {
+        // מוסיף מרווח תחתון כדי למנוע את ההסתרה של הכרטיסים
+        marginBottom: 10, 
+        paddingBottom: 5,
+        zIndex: 1,
+    },
     categoriesScrollContainer: {
         maxHeight: 100,
         backgroundColor: 'white',
@@ -326,6 +347,7 @@ const styles = StyleSheet.create({
     scrollContent: {
         paddingHorizontal: 15,
         paddingBottom: 20,
+        paddingTop: 5, // מוסיף מרווח עליון כדי להפריד מהקטגוריות
     },
     consultationCard: {
         backgroundColor: 'white',
@@ -337,6 +359,7 @@ const styles = StyleSheet.create({
         shadowOpacity: 0.1,
         shadowRadius: 4,
         elevation: 3,
+        zIndex: 0,
     },
     cardHeader: {
         flexDirection: 'row',

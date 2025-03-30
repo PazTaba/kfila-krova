@@ -1,18 +1,25 @@
-import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, Image, Platform } from 'react-native';
+import React, { useState, useCallback } from 'react';
+import {
+    View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, Image, Platform, ScrollView
+} from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { Feather } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Location from 'expo-location';
-
+import { useFocusEffect } from '@react-navigation/native';
+import { useProducts } from '../hooks/useProducts'; // ✅ ייבוא hook של products
 
 export default function AddProductScreen({ navigation }: any) {
     const [name, setName] = useState('');
+    const [description, setDescription] = useState('');
     const [price, setPrice] = useState('');
     const [distance, setDistance] = useState('');
     const [image, setImage] = useState<string | null>(null);
     const [category, setCategory] = useState('');
+    const [condition, setCondition] = useState('');
+    const [address, setAddress] = useState('');
 
+    const { fetchProducts } = useProducts(); // ✅ שימוש ב-fetchProducts מה-context
 
     const pickImage = async () => {
         const result = await ImagePicker.launchImageLibraryAsync({
@@ -22,14 +29,13 @@ export default function AddProductScreen({ navigation }: any) {
         });
 
         if (!result.canceled) {
-            const imageUri = result.assets[0].uri;
-            setImage(imageUri); // נשתמש רק ל-preview, ולא נעלה ל-Firebase
+            setImage(result.assets[0].uri);
         }
     };
 
     const handleAdd = async () => {
-        if (!name || !price || !distance || !image || !category) {
-            Alert.alert('שגיאה', 'אנא מלא את כל השדות');
+        if (!name || !price || !description || !image || !category || !condition || !address) {
+            Alert.alert('שגיאה', 'אנא מלא את כל השדות החובה');
             return;
         }
 
@@ -41,17 +47,18 @@ export default function AddProductScreen({ navigation }: any) {
                 Alert.alert('שגיאה', 'משתמש לא מזוהה');
                 return;
             }
-            
 
             const location = await Location.getCurrentPositionAsync({});
-            const latitude = location.coords.latitude;
-            const longitude = location.coords.longitude;
+            const { latitude, longitude } = location.coords;
 
             const formData = new FormData();
             formData.append('name', name);
+            formData.append('description', description);
             formData.append('price', price);
             formData.append('distance', distance);
             formData.append('category', category);
+            formData.append('condition', condition);
+            formData.append('address', address);
             formData.append('userId', userId);
             formData.append('latitude', latitude.toString());
             formData.append('longitude', longitude.toString());
@@ -62,7 +69,7 @@ export default function AddProductScreen({ navigation }: any) {
                 type: 'image/jpeg'
             } as any);
 
-            const response = await fetch('http://172.20.10.3:3000/add-product', {
+            const response = await fetch('http://172.20.10.3:3000/products/add', {
                 method: 'POST',
                 headers: {
                     Authorization: `Bearer ${token}`,
@@ -72,12 +79,13 @@ export default function AddProductScreen({ navigation }: any) {
 
             const data = await response.json();
 
-            if (!response.ok) {
-                throw new Error(data.message || 'Unknown error');
-            }
+            if (!response.ok) throw new Error(data.message || 'Unknown error');
 
             Alert.alert('הצלחה', 'המוצר נוסף בהצלחה');
-            navigation.navigate('Marketplace');
+
+            await fetchProducts(); // ✅ רענון רשימת מוצרים מהשרת
+
+            navigation.goBack(); // ✅ חזרה למסך הקודם כדי ש־useFocusEffect ירענן
         } catch (error: any) {
             Alert.alert('שגיאה', 'אירעה שגיאה בהוספה');
             console.error(error);
@@ -95,7 +103,7 @@ export default function AddProductScreen({ navigation }: any) {
                 <Text style={styles.headerTitle}>הוספת מוצר חדש</Text>
             </View>
 
-            <View style={styles.content}>
+            <ScrollView style={styles.content}>
                 {image ? (
                     <View style={styles.imagePreviewContainer}>
                         <Image
@@ -132,6 +140,20 @@ export default function AddProductScreen({ navigation }: any) {
                         <Feather name="tag" size={20} color="#B0B0B0" style={styles.inputIcon} />
                     </View>
 
+                    <View style={styles.textAreaWrapper}>
+                        <TextInput
+                            style={styles.textArea}
+                            placeholder="תיאור המוצר"
+                            placeholderTextColor="#B0B0B0"
+                            value={description}
+                            onChangeText={setDescription}
+                            multiline
+                            numberOfLines={4}
+                            textAlignVertical="top"
+                        />
+                        <Feather name="file-text" size={20} color="#B0B0B0" style={styles.textAreaIcon} />
+                    </View>
+
                     <View style={styles.inputWrapper}>
                         <TextInput
                             style={styles.input}
@@ -147,7 +169,29 @@ export default function AddProductScreen({ navigation }: any) {
                     <View style={styles.inputWrapper}>
                         <TextInput
                             style={styles.input}
-                            placeholder="מרחק"
+                            placeholder="מצב המוצר (כמו: חדש, כמעט חדש, משומש)"
+                            placeholderTextColor="#B0B0B0"
+                            value={condition}
+                            onChangeText={setCondition}
+                        />
+                        <Feather name="check-circle" size={20} color="#B0B0B0" style={styles.inputIcon} />
+                    </View>
+
+                    <View style={styles.inputWrapper}>
+                        <TextInput
+                            style={styles.input}
+                            placeholder="כתובת מלאה"
+                            placeholderTextColor="#B0B0B0"
+                            value={address}
+                            onChangeText={setAddress}
+                        />
+                        <Feather name="map" size={20} color="#B0B0B0" style={styles.inputIcon} />
+                    </View>
+
+                    <View style={styles.inputWrapper}>
+                        <TextInput
+                            style={styles.input}
+                            placeholder="מרחק (ק״מ)"
                             placeholderTextColor="#B0B0B0"
                             keyboardType="numeric"
                             value={distance}
@@ -155,17 +199,17 @@ export default function AddProductScreen({ navigation }: any) {
                         />
                         <Feather name="map-pin" size={20} color="#B0B0B0" style={styles.inputIcon} />
                     </View>
+
                     <View style={styles.inputWrapper}>
                         <TextInput
                             style={styles.input}
-                            placeholder="קטגוריה (למשל: furniture)"
+                            placeholder="קטגוריה (למשל: furniture, electronics)"
                             placeholderTextColor="#B0B0B0"
                             value={category}
                             onChangeText={setCategory}
                         />
                         <Feather name="grid" size={20} color="#B0B0B0" style={styles.inputIcon} />
                     </View>
-
                 </View>
 
                 <TouchableOpacity
@@ -175,7 +219,10 @@ export default function AddProductScreen({ navigation }: any) {
                     <Text style={styles.submitButtonText}>הוסף מוצר</Text>
                     <Feather name="plus-circle" size={20} color="white" />
                 </TouchableOpacity>
-            </View>
+
+                {/* Add bottom padding for scrolling */}
+                <View style={{ height: 30 }} />
+            </ScrollView>
         </View>
     );
 }
@@ -272,18 +319,42 @@ const styles = StyleSheet.create({
         shadowRadius: 3,
         elevation: 2,
     },
+    textAreaWrapper: {
+        marginBottom: 15,
+        position: 'relative',
+    },
+    textArea: {
+        backgroundColor: 'white',
+        borderRadius: 10,
+        paddingHorizontal: 45,
+        paddingVertical: 12,
+        paddingTop: 12,
+        fontSize: 16,
+        textAlign: 'right',
+        minHeight: 100,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.05,
+        shadowRadius: 3,
+        elevation: 2,
+    },
+    textAreaIcon: {
+        position: 'absolute',
+        right: 15,
+        top: 12,
+    },
     inputIcon: {
         position: 'absolute',
         right: 15,
     },
     submitButton: {
-        backgroundColor: '#4A90E2',
+        backgroundColor: '#6C5CE7', // Changed to match the purple theme from ProductDetailsScreen
         borderRadius: 10,
         paddingVertical: 15,
         flexDirection: 'row',
         justifyContent: 'center',
         alignItems: 'center',
-        shadowColor: '#4A90E2',
+        shadowColor: '#6C5CE7',
         shadowOffset: { width: 0, height: 4 },
         shadowOpacity: 0.3,
         shadowRadius: 5,

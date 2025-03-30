@@ -27,6 +27,7 @@ export default function RootNavigator() {
         <Stack.Screen name="MainTabs" component={MainTabNavigator} />
         <Stack.Screen name="AddProduct" component={AddProductScreen} />
         <Stack.Screen name="ConsultationStack" component={ConsultationStack} />
+        
       </Stack.Navigator>
     </NavigationContainer>
   );

@@ -1,39 +1,20 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
     View, Text, ScrollView, StyleSheet, TouchableOpacity, Image, Platform,
-    TextInput, Modal, Dimensions
+    TextInput, Modal
 } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { Feather } from '@expo/vector-icons';
-
-type Product = {
-    _id: string;
-    name: string;
-    price: number;
-    distance: number;
-    image: string;
-    category: string;
-};
-
-const CATEGORIES = [
-    { id: 'all', name: 'הכל', icon: '🌐', color: '#4A90E2' },
-    { id: 'electronics', name: 'אלקטרוניקה', icon: '💻', color: '#FF6B6B' },
-    { id: 'clothing', name: 'ביגוד', icon: '👕', color: '#4ECDC4' },
-    { id: 'furniture', name: 'ריהוט', icon: '🛋️', color: '#45B7D1' },
-    { id: 'books', name: 'ספרים', icon: '📚', color: '#FFA07A' },
-    { id: 'sports', name: 'ספורט', icon: '⚽', color: '#5D3FD3' },
-    { id: 'home', name: 'בית', icon: '🏠', color: '#2A9D8F' },
-    { id: 'cars', name: 'רכב', icon: '🚗', color: '#F4A261' },
-    { id: 'jewelry', name: 'תכשיטים', icon: '💍', color: '#9C6644' },
-    { id: 'garden', name: 'גינה', icon: '🌱', color: '#588157' },
-    { id: 'pets', name: 'חיות מחמד', icon: '🐾', color: '#BC4749' },
-    { id: 'music', name: 'מוזיקה', icon: '🎸', color: '#6A4C93' },
-];
+import { useCategories } from '../hooks/useCategories';
+import { useProducts } from '../hooks/useProducts';
 
 export default function MarketplaceScreen() {
+
     const navigation = useNavigation<any>();
-    const [products, setProducts] = useState<Product[]>([]);
-    const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
+    const { categories } = useCategories();
+    const { products, fetchProducts } = useProducts();
+
+    const [filteredProducts, setFilteredProducts] = useState(products);
     const [selectedCategory, setSelectedCategory] = useState<string>('all');
     const [searchQuery, setSearchQuery] = useState<string>('');
     const [isFiltersModalVisible, setIsFiltersModalVisible] = useState(false);
@@ -43,19 +24,54 @@ export default function MarketplaceScreen() {
         maxDistance?: number;
     }>({});
 
-    // Filters Modal Component
+    useFocusEffect(
+        useCallback(() => {
+            fetchProducts();
+        }, [])
+    );
+    useEffect(() => {
+        filterProducts();
+    }, [products, selectedCategory, searchQuery, activeFilters]);
+
+    const filterProducts = () => {
+        let filtered = [...products];
+
+        if (selectedCategory !== 'all') {
+            filtered = filtered.filter(p => p.category === selectedCategory);
+        }
+
+        if (searchQuery.trim()) {
+            filtered = filtered.filter(p =>
+                p.name.toLowerCase().includes(searchQuery.toLowerCase())
+            );
+        }
+
+        if (activeFilters.minPrice !== undefined) {
+            filtered = filtered.filter(p => p.price >= activeFilters.minPrice!);
+        }
+
+        if (activeFilters.maxPrice !== undefined) {
+            filtered = filtered.filter(p => p.price <= activeFilters.maxPrice!);
+        }
+
+        if (activeFilters.maxDistance !== undefined) {
+            filtered = filtered.filter(p => p.distance <= activeFilters.maxDistance!);
+        }
+
+        setFilteredProducts(filtered);
+    };
+
     const FiltersModal = () => {
         const [minPrice, setMinPrice] = useState<string>('');
         const [maxPrice, setMaxPrice] = useState<string>('');
         const [maxDistance, setMaxDistance] = useState<string>('');
 
         const applyFilters = () => {
-            const filters = {
+            setActiveFilters({
                 minPrice: minPrice ? parseFloat(minPrice) : undefined,
                 maxPrice: maxPrice ? parseFloat(maxPrice) : undefined,
-                maxDistance: maxDistance ? parseFloat(maxDistance) : undefined
-            };
-            setActiveFilters(filters);
+                maxDistance: maxDistance ? parseFloat(maxDistance) : undefined,
+            });
             setIsFiltersModalVisible(false);
         };
 
@@ -90,7 +106,6 @@ export default function MarketplaceScreen() {
                                     <TextInput
                                         style={styles.priceInput}
                                         placeholder="מחיר מקסימלי"
-                                        placeholderTextColor="#7A7A7A"
                                         keyboardType="numeric"
                                         value={maxPrice}
                                         onChangeText={setMaxPrice}
@@ -98,7 +113,6 @@ export default function MarketplaceScreen() {
                                     <TextInput
                                         style={styles.priceInput}
                                         placeholder="מחיר מינימלי"
-                                        placeholderTextColor="#7A7A7A"
                                         keyboardType="numeric"
                                         value={minPrice}
                                         onChangeText={setMinPrice}
@@ -110,8 +124,7 @@ export default function MarketplaceScreen() {
                                 <Text style={styles.filterLabel}>מרחק מקסימלי</Text>
                                 <TextInput
                                     style={styles.distanceInput}
-                                    placeholder="מרחק מקסימלי בק״מ"
-                                    placeholderTextColor="#7A7A7A"
+                                    placeholder="מרחק בק״מ"
                                     keyboardType="numeric"
                                     value={maxDistance}
                                     onChangeText={setMaxDistance}
@@ -120,16 +133,10 @@ export default function MarketplaceScreen() {
                         </ScrollView>
 
                         <View style={styles.modalActions}>
-                            <TouchableOpacity
-                                style={styles.resetButton}
-                                onPress={resetFilters}
-                            >
+                            <TouchableOpacity style={styles.resetButton} onPress={resetFilters}>
                                 <Text style={styles.resetButtonText}>אפס סינונים</Text>
                             </TouchableOpacity>
-                            <TouchableOpacity
-                                style={styles.applyButton}
-                                onPress={applyFilters}
-                            >
+                            <TouchableOpacity style={styles.applyButton} onPress={applyFilters}>
                                 <Text style={styles.applyButtonText}>החל סינונים</Text>
                             </TouchableOpacity>
                         </View>
@@ -137,55 +144,6 @@ export default function MarketplaceScreen() {
                 </View>
             </Modal>
         );
-    };
-
-    useEffect(() => {
-        fetchProducts();
-    }, []);
-
-    useEffect(() => {
-        filterProducts();
-    }, [products, selectedCategory, searchQuery, activeFilters]);
-
-    const fetchProducts = async () => {
-        try {
-            const response = await fetch('http://172.20.10.3:3000/products');
-            const data = await response.json();
-            setProducts(data);
-        } catch (error) {
-            console.error('error at loading product:', error);
-        }
-    };
-
-    const filterProducts = () => {
-        let filtered = [...products];
-
-        // Category filter
-        if (selectedCategory !== 'all') {
-            filtered = filtered.filter(p => p.category === selectedCategory);
-        }
-
-        // Search query filter
-        if (searchQuery.trim()) {
-            filtered = filtered.filter(p =>
-                p.name.toLowerCase().includes(searchQuery.toLowerCase())
-            );
-        }
-
-        // Price range filter
-        if (activeFilters.minPrice !== undefined) {
-            filtered = filtered.filter(p => p.price >= activeFilters.minPrice!);
-        }
-        if (activeFilters.maxPrice !== undefined) {
-            filtered = filtered.filter(p => p.price <= activeFilters.maxPrice!);
-        }
-
-        // Distance filter
-        if (activeFilters.maxDistance !== undefined) {
-            filtered = filtered.filter(p => p.distance <= activeFilters.maxDistance!);
-        }
-
-        setFilteredProducts(filtered);
     };
 
     return (
@@ -219,7 +177,10 @@ export default function MarketplaceScreen() {
                 contentContainerStyle={styles.categoriesContainer}
                 style={styles.categoriesScrollContainer}
             >
-                {CATEGORIES.map((category) => {
+                {[
+                    { id: 'all', name: 'הכל', icon: '🌐', color: '#4A90E2' },
+                    ...categories
+                ].map((category) => {
                     const isSelected = selectedCategory === category.id;
                     return (
                         <TouchableOpacity
@@ -266,6 +227,7 @@ export default function MarketplaceScreen() {
                             key={product._id}
                             style={styles.card}
                             activeOpacity={0.7}
+                            onPress={() => navigation.navigate('Products', { productId: product._id })}
                         >
                             <Image
                                 source={{ uri: `http://172.20.10.3:3000${product.image}` }}
@@ -276,7 +238,6 @@ export default function MarketplaceScreen() {
                                 <Text style={styles.name} numberOfLines={1}>{product.name}</Text>
                                 <View style={styles.productInfo}>
                                     <View style={styles.infoItem}>
-                                        {/* <Feather name="dollar-sign" size={16} color="#4A4A4A" /> */}
                                         <Text style={styles.infoText}>₪{product.price}</Text>
                                     </View>
                                     <View style={styles.infoItem}>
@@ -298,11 +259,11 @@ export default function MarketplaceScreen() {
                 <Feather name="plus-circle" size={20} color="white" />
             </TouchableOpacity>
 
-            {/* Filters Modal */}
             <FiltersModal />
         </View>
     );
 }
+
 
 const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: '#F9F9F9' },

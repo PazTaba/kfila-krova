@@ -33,8 +33,8 @@ export type Answer = {
     author: string;
     likes?: number;
     createdAt?: string; // ← חדש
-  };
-  
+};
+
 
 /* ========== Consultation Object Type ========== */
 export type Consultation = {
@@ -50,6 +50,9 @@ export type Consultation = {
     };
     status?: string;
     createdAt?: string;
+    author: string;
+
+
 };
 
 
@@ -62,9 +65,11 @@ export type RootStackParamList = {
     Login: undefined;
     Register: undefined;
     MainTabs: undefined;
+    Product:undefined;
     AddProduct: undefined;
     ConsultationStack: undefined;
     ConsultationDetails: { consultation: Consultation };
+    SlideHomeStack:undefined;
 };
 
 /* ========== ConsultationStackParamList ========== */

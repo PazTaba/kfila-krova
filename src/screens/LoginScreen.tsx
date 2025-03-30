@@ -9,18 +9,15 @@ import {
     KeyboardAvoidingView,
     Platform,
     Alert,
-    ActivityIndicator
+    ActivityIndicator,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { LoginScreenProps } from "../navigation/navigation-types"
+import { LoginScreenProps } from '../navigation/navigation-types';
+import { useUser } from '../contexts/UserContext';
 import { updateUserLocation } from '../utils/location';
+import { User } from '../types/User';
 
-// Configuration for API endpoint
-const API_BASE_URL = 'http://172.20.10.3:3000'; // Replace with your server's IP/domain
-
-
-
+const API_BASE_URL = 'http://172.20.10.3:3000';
 
 function LoginScreen({ navigation }: LoginScreenProps): React.JSX.Element {
     const [email, setEmail] = useState('');
@@ -28,8 +25,9 @@ function LoginScreen({ navigation }: LoginScreenProps): React.JSX.Element {
     const [isPasswordVisible, setIsPasswordVisible] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
 
+    const { login } = useUser();
+
     const handleLogin = async () => {
-        // Basic validation
         if (!email || !password) {
             Alert.alert('שגיאה', 'אנא מלא את כל השדות');
             return;
@@ -38,37 +36,28 @@ function LoginScreen({ navigation }: LoginScreenProps): React.JSX.Element {
         setIsLoading(true);
 
         try {
-            const response = await fetch(`${API_BASE_URL}/login`, {
+            const response = await fetch(`${API_BASE_URL}/auth/login`, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ email, password }),
             });
 
             const data = await response.json();
 
             if (response.ok) {
-                // Save token and user info
                 await updateUserLocation();
-                await AsyncStorage.setItem('userToken', data.token);
-                await AsyncStorage.setItem('userData', JSON.stringify(data.user));
-                await AsyncStorage.setItem('token', data.token);
-                console.log(data.token)
-                await AsyncStorage.setItem('userId', data.user.id);
 
+                const userData: User = data.user;
+                const token: string = data.token;
 
-                // Navigate to Home screen
+                await login(userData, token);
                 navigation.replace('MainTabs');
-
-
             } else {
-                // Handle login error
                 Alert.alert('שגיאה', data.message || 'התחברות נכשלה');
             }
         } catch (error) {
             console.error('Login error:', error);
-            Alert.alert('שגיאה', 'בעיית תקשורת עם השרת');
+            Alert.alert('שגיאה', 'שגיאה בתקשורת עם השרת');
         } finally {
             setIsLoading(false);
         }
@@ -88,14 +77,9 @@ function LoginScreen({ navigation }: LoginScreenProps): React.JSX.Element {
                     <Text style={styles.title}>התחברות</Text>
 
                     <View style={styles.inputContainer}>
-                        <Ionicons
-                            name="mail-outline"
-                            size={24}
-                            color="#666"
-                            style={styles.inputIcon}
-                        />
+                        <Ionicons name="mail-outline" size={24} color="#666" style={styles.inputIcon} />
                         <TextInput
-                            placeholder="דואל"
+                            placeholder="דוא״ל"
                             placeholderTextColor="#666"
                             style={styles.input}
                             value={email}
@@ -107,12 +91,7 @@ function LoginScreen({ navigation }: LoginScreenProps): React.JSX.Element {
                     </View>
 
                     <View style={styles.inputContainer}>
-                        <Ionicons
-                            name="lock-closed-outline"
-                            size={24}
-                            color="#666"
-                            style={styles.inputIcon}
-                        />
+                        <Ionicons name="lock-closed-outline" size={24} color="#666" style={styles.inputIcon} />
                         <TextInput
                             placeholder="סיסמה"
                             placeholderTextColor="#666"
@@ -127,7 +106,7 @@ function LoginScreen({ navigation }: LoginScreenProps): React.JSX.Element {
                             style={styles.showPasswordButton}
                         >
                             <Ionicons
-                                name={isPasswordVisible ? "eye-off-outline" : "eye-outline"}
+                                name={isPasswordVisible ? 'eye-off-outline' : 'eye-outline'}
                                 size={24}
                                 color="#666"
                             />
@@ -159,22 +138,9 @@ function LoginScreen({ navigation }: LoginScreenProps): React.JSX.Element {
 }
 
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        backgroundColor: '#F5F5F5',
-    },
-    loginContainer: {
-        flex: 1,
-        justifyContent: 'center',
-        paddingHorizontal: 30,
-    },
-    title: {
-        fontSize: 24,
-        fontWeight: 'bold',
-        textAlign: 'center',
-        marginBottom: 30,
-        color: '#333',
-    },
+    container: { flex: 1, backgroundColor: '#F5F5F5' },
+    loginContainer: { flex: 1, justifyContent: 'center', paddingHorizontal: 30 },
+    title: { fontSize: 24, fontWeight: 'bold', textAlign: 'center', marginBottom: 30, color: '#333' },
     inputContainer: {
         flexDirection: 'row-reverse',
         alignItems: 'center',
@@ -187,18 +153,9 @@ const styles = StyleSheet.create({
         shadowRadius: 3.84,
         elevation: 3,
     },
-    inputIcon: {
-        paddingHorizontal: 10,
-    },
-    input: {
-        flex: 1,
-        height: 50,
-        paddingHorizontal: 10,
-        fontSize: 16,
-    },
-    showPasswordButton: {
-        paddingHorizontal: 10,
-    },
+    inputIcon: { paddingHorizontal: 10 },
+    input: { flex: 1, height: 50, paddingHorizontal: 10, fontSize: 16 },
+    showPasswordButton: { paddingHorizontal: 10 },
     loginButton: {
         backgroundColor: '#007BFF',
         borderRadius: 10,
@@ -207,24 +164,14 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         marginTop: 20,
     },
-    loginButtonText: {
-        color: 'white',
-        fontSize: 18,
-        fontWeight: 'bold',
-    },
+    loginButtonText: { color: 'white', fontSize: 18, fontWeight: 'bold' },
     registerContainer: {
         flexDirection: 'row-reverse',
         justifyContent: 'center',
         marginTop: 20,
     },
-    registerPrompt: {
-        marginLeft: 5,
-        color: '#666',
-    },
-    registerText: {
-        color: '#007BFF',
-        fontWeight: 'bold',
-    },
+    registerPrompt: { marginLeft: 5, color: '#666' },
+    registerText: { color: '#007BFF', fontWeight: 'bold' },
 });
 
 export { LoginScreen };

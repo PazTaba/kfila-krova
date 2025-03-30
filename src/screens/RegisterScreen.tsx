@@ -1,75 +1,50 @@
 import React, { useState } from 'react';
 import {
-    View,
-    Text,
-    TextInput,
-    StyleSheet,
-    TouchableOpacity,
-    SafeAreaView,
-    KeyboardAvoidingView,
-    Platform,
-    Alert,
-    ActivityIndicator,
+    View, Text, TextInput, StyleSheet, TouchableOpacity, SafeAreaView,
+    KeyboardAvoidingView, Platform, Alert, ActivityIndicator
 } from 'react-native';
-
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Location from 'expo-location';
+
 import { RegisterScreenProps } from '../navigation/navigation-types';
-import { RegisterRequestBody } from '../navigation/navigation-types';
+import { User, Location as UserLocation, Gender } from '../types/User';
+import { AuthResponse, ApiError } from '../types/api';
+import { useUser } from '../hooks/useUser';
+import { useLocation } from '../hooks/useLocation';
 
 const API_BASE_URL = 'http://172.20.10.3:3000';
 
-const GenderSelection = ({ 
-    selectedGender, 
-    onGenderChange 
-}: { 
-    selectedGender: 'male' | 'female' | 'other', 
-    onGenderChange: (gender: 'male' | 'female' | 'other') => void 
+const GenderSelection = ({ selectedGender, onGenderChange }: {
+    selectedGender: Gender;
+    onGenderChange: (gender: Gender) => void;
 }) => {
-    const genderOptions = [
-        { 
-            value: 'male', 
-            label: 'זכר', 
-            icon: 'male' 
-        },
-        { 
-            value: 'female', 
-            label: 'נקבה', 
-            icon: 'female' 
-        },
-        { 
-            value: 'other', 
-            label: 'אחר', 
-            icon: 'transgender' 
-        }
+    const options: { value: Gender; label: string; icon: string }[] = [
+        { value: 'male', label: 'זכר', icon: 'male' },
+        { value: 'female', label: 'נקבה', icon: 'female' },
+        { value: 'other', label: 'אחר', icon: 'transgender' },
     ];
+
 
     return (
         <View style={styles.genderContainer}>
-            {/* <Text style={styles.genderLabel}>מגדר</Text> */}
             <View style={styles.genderButtonGroup}>
-                {genderOptions.map((gender) => (
+                {options.map((g) => (
                     <TouchableOpacity
-                        key={gender.value}
-                        style={[
-                            styles.genderButton,
-                            selectedGender === gender.value && styles.selectedGenderButton
-                        ]}
-                        onPress={() => onGenderChange(gender.value as 'male' | 'female' | 'other')}
+                        key={g.value}
+                        style={[styles.genderButton, selectedGender === g.value && styles.selectedGenderButton]}
+                        onPress={() => onGenderChange(g.value)}
                     >
-                        <Ionicons 
-                            name={`${gender.icon}-outline`} 
-                            size={24} 
-                            color={selectedGender === gender.value ? 'white' : '#007BFF'}
+                        <Ionicons
+                            name={`${g.icon}-outline` as any}
+                            size={24}
+                            color={selectedGender === g.value ? 'white' : '#007BFF'}
                         />
-                        <Text 
-                            style={[
-                                styles.genderButtonText,
-                                selectedGender === gender.value && styles.selectedGenderButtonText
-                            ]}
-                        >
-                            {gender.label}
+                        <Text style={[
+                            styles.genderButtonText,
+                            selectedGender === g.value && styles.selectedGenderButtonText,
+                        ]}>
+                            {g.label}
                         </Text>
                     </TouchableOpacity>
                 ))}
@@ -81,16 +56,19 @@ const GenderSelection = ({
 function RegisterScreen({ navigation }: RegisterScreenProps): React.JSX.Element {
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
+    const [phoneNumber, setPhoneNumber] = useState('');
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
-    const [phoneNumber, setPhoneNumber] = useState('');
     const [age, setAge] = useState('');
-    const [gender, setGender] = useState<'male' | 'female' | 'other'>('other');
+    const [gender, setGender] = useState<Gender>('other');
     const [isPasswordVisible, setIsPasswordVisible] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
 
+    const { login } = useUser();
+    const { updateLocation } = useLocation();
+
     const handleRegister = async () => {
-        if (!name || !email || !password || !confirmPassword || !age || !gender) {
+        if (!name || !email || !password || !confirmPassword || !age) {
             Alert.alert('שגיאה', 'יש למלא את כל השדות החובה');
             return;
         }
@@ -100,49 +78,56 @@ function RegisterScreen({ navigation }: RegisterScreenProps): React.JSX.Element 
             return;
         }
 
+        const parsedAge = parseInt(age);
+        if (isNaN(parsedAge) || parsedAge <= 0) {
+            Alert.alert('שגיאה', 'יש להזין גיל תקין');
+            return;
+        }
+
         setIsLoading(true);
 
         try {
             const { status } = await Location.requestForegroundPermissionsAsync();
+            let userLocation: UserLocation | undefined;
 
-            let location;
             if (status === 'granted') {
-                const locationResult = await Location.getCurrentPositionAsync({});
-                location = {
-                    latitude: locationResult.coords.latitude,
-                    longitude: locationResult.coords.longitude
+                const result = await Location.getCurrentPositionAsync({});
+                userLocation = {
+                    latitude: result.coords.latitude,
+                    longitude: result.coords.longitude,
                 };
+
+                await updateLocation(); // שמירת מיקום ב־Context
             }
 
-            const registrationData: RegisterRequestBody = {
+            const body = {
                 name,
                 email,
                 password,
-                location,
-                phoneNumber,
                 gender,
-                age: parseInt(age)
+                age: parsedAge,
+                phoneNumber,
+                location: userLocation,
             };
 
-            const response = await fetch(`${API_BASE_URL}/register`, {
+            const response = await fetch(`${API_BASE_URL}/auth/register`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(registrationData),
+                body: JSON.stringify(body),
             });
 
-            const data = await response.json();
+            const data: AuthResponse | ApiError = await response.json();
 
             if (response.ok) {
-                await AsyncStorage.setItem('userToken', data.token);
-                await AsyncStorage.setItem('userData', JSON.stringify(data.user));
-
-                Alert.alert('הרשמה', 'נרשמת בהצלחה', [
-                    { text: 'OK', onPress: () => navigation.replace('Login') }
-                ]);
+                const { user, token } = data as AuthResponse;
+                await login(user, token); // שמירה ב־Context
+                navigation.replace('MainTabs'); // מעבר אוטומטי ל־Home
             } else {
-                Alert.alert('שגיאה', data.message || 'שגיאת שרת');
+                const { message } = data as ApiError;
+                Alert.alert('שגיאה', message || 'שגיאת שרת');
             }
-        } catch (error) {
+        } catch (err) {
+            console.error('Register error:', err);
             Alert.alert('שגיאה', 'תקלה בתקשורת עם השרת');
         } finally {
             setIsLoading(false);
@@ -154,40 +139,11 @@ function RegisterScreen({ navigation }: RegisterScreenProps): React.JSX.Element 
             <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.container}>
                 <View style={styles.loginContainer}>
                     <Text style={styles.title}>הרשמה</Text>
-
-                    <Input 
-                        icon="person-outline" 
-                        placeholder="שם מלא" 
-                        value={name} 
-                        onChangeText={setName} 
-                    />
-                    <Input 
-                        icon="mail-outline" 
-                        placeholder="דואל" 
-                        value={email} 
-                        onChangeText={setEmail} 
-                        keyboardType="email-address" 
-                    />
-                    <Input 
-                        icon="call-outline" 
-                        placeholder="טלפון (אופציונלי)" 
-                        value={phoneNumber} 
-                        onChangeText={setPhoneNumber} 
-                        keyboardType="phone-pad" 
-                    />
-                    <Input 
-                        icon="calendar-outline" 
-                        placeholder="גיל" 
-                        value={age} 
-                        onChangeText={setAge} 
-                        keyboardType="numeric" 
-                    />
-
-                    <GenderSelection 
-                        selectedGender={gender}
-                        onGenderChange={setGender}
-                    />
-
+                    <Input icon="person-outline" placeholder="שם מלא" value={name} onChangeText={setName} />
+                    <Input icon="mail-outline" placeholder="דוא״ל" value={email} onChangeText={setEmail} />
+                    <Input icon="call-outline" placeholder="טלפון (אופציונלי)" value={phoneNumber} onChangeText={setPhoneNumber} />
+                    <Input icon="calendar-outline" placeholder="גיל" value={age} onChangeText={setAge} keyboardType="numeric" />
+                    <GenderSelection selectedGender={gender} onGenderChange={setGender} />
                     <PasswordInput
                         placeholder="סיסמה"
                         value={password}
@@ -203,16 +159,8 @@ function RegisterScreen({ navigation }: RegisterScreenProps): React.JSX.Element 
                         toggleVisibility={() => setIsPasswordVisible(!isPasswordVisible)}
                     />
 
-                    <TouchableOpacity 
-                        style={styles.loginButton} 
-                        onPress={handleRegister} 
-                        disabled={isLoading}
-                    >
-                        {isLoading ? (
-                            <ActivityIndicator color="white" />
-                        ) : (
-                            <Text style={styles.loginButtonText}>הירשם</Text>
-                        )}
+                    <TouchableOpacity style={styles.loginButton} onPress={handleRegister} disabled={isLoading}>
+                        {isLoading ? <ActivityIndicator color="white" /> : <Text style={styles.loginButtonText}>הירשם</Text>}
                     </TouchableOpacity>
 
                     <View style={styles.registerContainer}>
@@ -283,8 +231,6 @@ const styles = StyleSheet.create({
     registerContainer: { flexDirection: 'row-reverse', justifyContent: 'center', marginTop: 20 },
     registerPrompt: { marginLeft: 5, color: '#666' },
     registerText: { color: '#007BFF', fontWeight: 'bold' },
-    
-    // New gender selection styles
     genderContainer: {
         marginBottom: 15,
         backgroundColor: 'white',
@@ -296,16 +242,8 @@ const styles = StyleSheet.create({
         shadowRadius: 3.84,
         elevation: 3,
     },
-    genderLabel: {
-        fontSize: 16,
-        color: '#333',
-        marginBottom: 10,
-        textAlign: 'right',
-    },
-    genderButtonGroup: {
-        flexDirection: 'row-reverse',
-        justifyContent: 'space-between',
-    },
+    genderLabel: { fontSize: 16, color: '#333', marginBottom: 10, textAlign: 'right' },
+    genderButtonGroup: { flexDirection: 'row-reverse', justifyContent: 'space-between' },
     genderButton: {
         flexDirection: 'row-reverse',
         alignItems: 'center',
@@ -317,17 +255,9 @@ const styles = StyleSheet.create({
         paddingHorizontal: 15,
         width: '30%',
     },
-    selectedGenderButton: {
-        backgroundColor: '#007BFF',
-    },
-    genderButtonText: {
-        marginRight: 5,
-        color: '#007BFF',
-        fontWeight: 'bold',
-    },
-    selectedGenderButtonText: {
-        color: 'white',
-    },
+    selectedGenderButton: { backgroundColor: '#007BFF' },
+    genderButtonText: { marginRight: 5, color: '#007BFF', fontWeight: 'bold' },
+    selectedGenderButtonText: { color: 'white' },
 });
 
 export { RegisterScreen };

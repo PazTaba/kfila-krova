@@ -5,12 +5,17 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ActivityIndicator, View } from 'react-native';
 
 import { RootStackParamList } from './src/navigation/navigation-types';
-
 import MainTabNavigator from './src/navigation/MainTabNavigator';
 import MapScreen from './src/screens/MapScreen';
 import { LoginScreen } from './src/screens/LoginScreen';
 import { RegisterScreen } from './src/screens/RegisterScreen';
 import { startBackgroundLocationUpdates } from './src/utils/backgroundLocation';
+
+// Context Providers
+import { UserProvider } from './src/contexts/UserContext';
+import { ProductsProvider } from './src/contexts/ProductsContext';
+import { CategoriesProvider } from './src/contexts/CategoriesContext';
+import { LocationProvider } from './src/contexts/LocationContext';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
@@ -25,7 +30,7 @@ export default function App() {
         setInitialRoute(token ? 'MainTabs' : 'Login');
 
         if (token) {
-          await startBackgroundLocationUpdates(); // ✅ נקרא רק אם יש התחברות
+          await startBackgroundLocationUpdates();
         }
       } catch (err) {
         console.error('Failed to read token', err);
@@ -47,16 +52,24 @@ export default function App() {
   }
 
   return (
-    <NavigationContainer>
-      <Stack.Navigator
-        initialRouteName={initialRoute}
-        screenOptions={{ headerShown: false }}
-      >
-        <Stack.Screen name="Login" component={LoginScreen} />
-        <Stack.Screen name="Register" component={RegisterScreen} />
-        <Stack.Screen name="MainTabs" component={MainTabNavigator} />
-        <Stack.Screen name="Map" component={MapScreen} />
-      </Stack.Navigator>
-    </NavigationContainer>
+    <UserProvider>
+      <LocationProvider>
+        <CategoriesProvider>
+          <ProductsProvider>
+            <NavigationContainer>
+              <Stack.Navigator
+                initialRouteName={initialRoute}
+                screenOptions={{ headerShown: false }}
+              >
+                <Stack.Screen name="Login" component={LoginScreen} />
+                <Stack.Screen name="Register" component={RegisterScreen} />
+                <Stack.Screen name="MainTabs" component={MainTabNavigator} />
+                <Stack.Screen name="Map" component={MapScreen} />
+              </Stack.Navigator>
+            </NavigationContainer>
+          </ProductsProvider>
+        </CategoriesProvider>
+      </LocationProvider>
+    </UserProvider>
   );
 }
