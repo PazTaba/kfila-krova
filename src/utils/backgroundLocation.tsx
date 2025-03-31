@@ -1,7 +1,7 @@
 // backgroundLocation.ts
 import * as TaskManager from 'expo-task-manager';
 import * as BackgroundFetch from 'expo-background-fetch';
-import { updateUserLocation } from './location';
+import { updateUserLocation } from './updateUserLocation';
 
 const LOCATION_TASK_NAME = 'background-location-task';
 

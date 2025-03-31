@@ -10,8 +10,9 @@ import {
   Modal,
   KeyboardAvoidingView
 } from 'react-native';
-import { Feather } from '@expo/vector-icons';
+import { Feather, Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // Expanded job interest areas with type definition
 interface JobInterest {
@@ -21,16 +22,22 @@ interface JobInterest {
   icon: string;
 }
 
-// Job interface for type safety
 interface Job {
-  id: number;
+  _id: string;
   title: string;
   company: string;
   type: string;
   location: string;
   salary: string;
   interest: string;
+  description: string;
+  requirements: string[];
+  contactEmail: string;
+  contactPhone: string;
+  postedDate: string;
+  createdAt: string;
 }
+
 
 // Salary filter interface
 interface SalaryFilters {
@@ -52,144 +59,7 @@ const JOB_INTERESTS: JobInterest[] = [
   { id: 'customerService', name: 'שירות לקוחות', color: '#BC4749', icon: '☎️' },
 ];
 
-// Expanded job listings with typing
-const initialJobsData: Job[] = [
-  {
-    id: 1,
-    title: 'מפתח/ת Full Stack',
-    company: 'סטארטאפ טכנולוגי',
-    type: 'קבוע',
-    location: 'תל אביב',
-    salary: '20,000-25,000 ₪',
-    interest: 'tech'
-  },
-  {
-    id: 2,
-    title: 'מנהל/ת פרויקטים טכנולוגיים',
-    company: 'חברת הייטק מובילה',
-    type: 'קבוע',
-    location: 'רעננה',
-    salary: '22,000-28,000 ₪',
-    interest: 'management'
-  },
-  {
-    id: 3,
-    title: 'מעצב/ת UX/UI',
-    company: 'סוכנות דיגיטל מובילה',
-    type: 'זמני',
-    location: 'תל אביב',
-    salary: '18,000-23,000 ₪',
-    interest: 'design'
-  },
-  {
-    id: 4,
-    title: 'מנהל/ת שיווק דיגיטלי',
-    company: 'חברת סטארטאפ צומחת',
-    type: 'קבוע',
-    location: 'הרצליה',
-    salary: '19,000-24,000 ₪',
-    interest: 'marketing'
-  },
-  {
-    id: 5,
-    title: 'מנתח/ת נתונים',
-    company: 'חברת טכנולוגיה מתקדמת',
-    type: 'קבוע',
-    location: 'תל אביב',
-    salary: '21,000-26,000 ₪',
-    interest: 'tech'
-  },
-  {
-    id: 6,
-    title: 'מנהל/ת כספים',
-    company: 'חברת השקעות',
-    type: 'קבוע',
-    location: 'רמת גן',
-    salary: '23,000-29,000 ₪',
-    interest: 'finance'
-  },
-  {
-    id: 7,
-    title: 'אחות/אח מוסמך/ת',
-    company: 'בית חולים מרכזי',
-    type: 'קבוע',
-    location: 'תל השומר',
-    salary: '17,000-22,000 ₪',
-    interest: 'healthcare'
-  },
-  {
-    id: 8,
-    title: 'מורה/ת למדעים',
-    company: 'בית ספר מוביל',
-    type: 'קבוע',
-    location: 'ירושלים',
-    salary: '15,000-20,000 ₪',
-    interest: 'education'
-  },
-  {
-    id: 9,
-    title: 'נציג/ת מכירות בכיר/ה',
-    company: 'חברת תקשורת',
-    type: 'זמני',
-    location: 'באר שבע',
-    salary: '16,000-21,000 ₪',
-    interest: 'sales'
-  },
-  {
-    id: 10,
-    title: 'נציג/ת שירות לקוחות',
-    company: 'חברת סטארטאפ חדשנית',
-    type: 'קבוע',
-    location: 'חיפה',
-    salary: '14,000-19,000 ₪',
-    interest: 'customerService'
-  },
-  {
-    id: 11,
-    title: 'מהנדס/ת תוכנה',
-    company: 'חברת הייטק בינלאומית',
-    type: 'קבוע',
-    location: 'תל אביב',
-    salary: '25,000-30,000 ₪',
-    interest: 'tech'
-  },
-  {
-    id: 12,
-    title: 'מנהל/ת שירות לקוחות',
-    company: 'חברת שירותים מובילה',
-    type: 'קבוע',
-    location: 'גבעתיים',
-    salary: '18,000-23,000 ₪',
-    interest: 'customerService'
-  },
-  {
-    id: 13,
-    title: 'מנתח/ת עסקי',
-    company: 'חברת יעוץ אסטרטגי',
-    type: 'זמני',
-    location: 'רמת גן',
-    salary: '20,000-25,000 ₪',
-    interest: 'management'
-  },
-  {
-    id: 14,
-    title: 'מומחה/ית שיווק דיגיטלי',
-    company: 'סוכנות מדיה דיגיטלית',
-    type: 'קבוע',
-    location: 'תל אביב',
-    salary: '19,000-24,000 ₪',
-    interest: 'marketing'
-  },
-  {
-    id: 15,
-    title: 'עיצוב גרפי',
-    company: 'סטודיו יצירתי',
-    type: 'זמני',
-    location: 'תל אביב',
-    salary: '16,000-21,000 ₪',
-    interest: 'design'
-  }
-];
+
 
 export default function JobsScreen() {
   const navigation = useNavigation<any>();
@@ -198,7 +68,29 @@ export default function JobsScreen() {
   const [jobType, setJobType] = useState<string>('all');
   const [isFiltersModalVisible, setIsFiltersModalVisible] = useState<boolean>(false);
   const [activeFilters, setActiveFilters] = useState<SalaryFilters>({});
-  const [jobsData, setJobsData] = useState<Job[]>(initialJobsData);
+  const [jobsData, setJobsData] = useState<Job[]>();
+  const [favoriteJobs, setFavoriteJobs] = useState<string[]>([]);
+
+  useEffect(() => {
+    loadFavoriteJobs();
+  }, []);
+
+  const loadFavoriteJobs = async () => {
+    const data = await AsyncStorage.getItem('favorites');
+    if (data) setFavoriteJobs(JSON.parse(data));
+  };
+
+  const toggleFavoriteJob = async (jobId: string) => {
+    let updatedFavorites = [...favoriteJobs];
+    if (favoriteJobs.includes(jobId)) {
+      updatedFavorites = updatedFavorites.filter(id => id !== jobId);
+    } else {
+      updatedFavorites.push(jobId);
+    }
+    setFavoriteJobs(updatedFavorites);
+    await AsyncStorage.setItem('favorites', JSON.stringify(updatedFavorites));
+  };
+
 
   // Filters Modal Component
   const FiltersModal: React.FC = () => {
@@ -213,6 +105,20 @@ export default function JobsScreen() {
       setActiveFilters(filters);
       setIsFiltersModalVisible(false);
     };
+    useEffect(() => {
+      const fetchJobs = async () => {
+        try {
+          const response = await fetch('http://172.20.10.3:3000/jobs'); // שים כאן את כתובת ה-API שלך
+          const data = await response.json();
+          setJobsData(data);
+        } catch (error) {
+          console.error('שגיאה בטעינת המשרות:', error);
+        }
+      };
+
+      fetchJobs();
+    }, []);
+
 
     const resetFilters = () => {
       setMinSalary('');
@@ -285,7 +191,7 @@ export default function JobsScreen() {
   };
 
   // Filter jobs based on search, interest, type, and salary
-  const filteredJobs = jobsData.filter(job => {
+  const filteredJobs = jobsData?.filter(job => {
     const matchesSearch = job.title.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesInterest = jobInterest === 'all' || job.interest === jobInterest;
     const matchesType = jobType === 'all' || job.type === jobType;
@@ -364,7 +270,7 @@ export default function JobsScreen() {
         showsVerticalScrollIndicator={false}
         style={styles.jobsScrollView}
       >
-        {filteredJobs.length === 0 ? (
+        {filteredJobs?.length === 0 ? (
           <View style={styles.emptyState}>
             <Text style={styles.emptyStateText}>
               {searchTerm
@@ -373,13 +279,24 @@ export default function JobsScreen() {
             </Text>
           </View>
         ) : (
-          filteredJobs.map((job) => (
+          filteredJobs?.map((job) => (
             <TouchableOpacity
-              key={job.id}
+              key={job._id}
               style={styles.jobCard}
               activeOpacity={0.7}
+              onPress={() => navigation.navigate('JobDetails', { job })}
             >
-              <Text style={styles.jobTitle}>{job.title}</Text>
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+                <TouchableOpacity onPress={() => toggleFavoriteJob(job._id)}>
+                  <Ionicons
+                    name={favoriteJobs.includes(job._id) ? 'heart' : 'heart-outline'}
+                    size={22}
+                    color={favoriteJobs.includes(job._id) ? '#FF6B6B' : '#999'}
+                  />
+                </TouchableOpacity>
+                <Text style={styles.jobTitle}>{job.title}</Text>
+              </View>
+
               <View style={styles.jobDetails}>
                 <Text style={styles.jobDetailText}>{job.company}</Text>
                 <Text style={styles.jobDetailText}>{job.location}</Text>
@@ -387,6 +304,7 @@ export default function JobsScreen() {
                 <Text style={styles.salaryText}>{job.salary}</Text>
               </View>
             </TouchableOpacity>
+
           ))
         )}
       </ScrollView>

@@ -5,7 +5,8 @@ import {
 } from 'react-native';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { Feather } from '@expo/vector-icons';
-import { useCategories } from '../hooks/useCategories';
+
+import { useCategories } from '../contexts/CategoriesContext';
 import { useProducts } from '../hooks/useProducts';
 
 export default function MarketplaceScreen() {
@@ -178,18 +179,18 @@ export default function MarketplaceScreen() {
                 style={styles.categoriesScrollContainer}
             >
                 {[
-                    { id: 'all', name: 'הכל', icon: '🌐', color: '#4A90E2' },
+                    { _id: 'all', name: 'הכל', icon: '🌐', color: '#4A90E2' },
                     ...categories
                 ].map((category) => {
-                    const isSelected = selectedCategory === category.id;
+                    const isSelected = selectedCategory === category._id;
                     return (
                         <TouchableOpacity
-                            key={category.id}
+                            key={category._id}
                             style={[
                                 styles.categoryButton,
                                 { backgroundColor: isSelected ? category.color : '#f4f4f4' }
                             ]}
-                            onPress={() => setSelectedCategory(category.id)}
+                            onPress={() => setSelectedCategory(category._id)}
                         >
                             <View style={styles.categoryContent}>
                                 <Text style={styles.categoryIcon}>{category.icon}</Text>

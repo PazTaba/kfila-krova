@@ -13,9 +13,10 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LoginScreenProps } from '../navigation/navigation-types';
-import { useUser } from '../contexts/UserContext';
-import { updateUserLocation } from '../utils/location';
+import { updateUserLocation } from '../utils/updateUserLocation';
 import { User } from '../types/User';
+import { useUser } from '../hooks/useUser';
+
 
 const API_BASE_URL = 'http://172.20.10.3:3000';
 
@@ -25,7 +26,7 @@ function LoginScreen({ navigation }: LoginScreenProps): React.JSX.Element {
     const [isPasswordVisible, setIsPasswordVisible] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
 
-    const { login } = useUser();
+    const { login } = useUser() // שימוש בפונקציה login מהקונטקסט
 
     const handleLogin = async () => {
         if (!email || !password) {
@@ -45,12 +46,12 @@ function LoginScreen({ navigation }: LoginScreenProps): React.JSX.Element {
             const data = await response.json();
 
             if (response.ok) {
-                await updateUserLocation();
+                await updateUserLocation(); // שמירת מיקום נוכחי ב־AsyncStorage או קונטקסט
 
                 const userData: User = data.user;
                 const token: string = data.token;
 
-                await login(userData, token);
+                await login(userData, token); // שמירה לקונטקסט ו־AsyncStorage
                 navigation.replace('MainTabs');
             } else {
                 Alert.alert('שגיאה', data.message || 'התחברות נכשלה');

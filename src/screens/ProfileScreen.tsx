@@ -15,14 +15,16 @@ import { RootStackParamList } from '../navigation/navigation-types';
 import { useUser } from '../hooks/useUser';
 import { useLocation } from '../hooks/useLocation';
 import { format } from 'date-fns';
-import {he} from 'date-fns/locale/he';
+import { he } from 'date-fns/locale/he';
 
 
 type ProfileScreenProps = NativeStackScreenProps<RootStackParamList, 'Profile'>;
 
 function ProfileScreen({ navigation }: ProfileScreenProps): React.JSX.Element {
     const { user } = useUser();
-    const { location } = useLocation();
+    console.log('📦 user from context:', user);
+    const { lastLocation: location } = useLocation();
+
 
     if (!user) {
         return (

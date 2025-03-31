@@ -59,17 +59,19 @@ export type Consultation = {
 /* ========== Stack Navigation ========== */
 export type RootStackParamList = {
     Home: undefined;
+    Favorites: undefined;
+    History: undefined;
     Profile: undefined;
     Settings: undefined;
     Map: undefined;
     Login: undefined;
     Register: undefined;
     MainTabs: undefined;
-    Product:undefined;
+    Product: undefined;
     AddProduct: undefined;
     ConsultationStack: undefined;
     ConsultationDetails: { consultation: Consultation };
-    SlideHomeStack:undefined;
+    SlideHomeStack: undefined;
 };
 
 /* ========== ConsultationStackParamList ========== */

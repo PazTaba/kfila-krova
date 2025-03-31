@@ -1,39 +1,44 @@
-import React, { createContext, useState, useEffect, ReactNode } from 'react';
-import * as Location from 'expo-location';
+// contexts/LocationContext.tsx
 
-type LocationType = {
-    latitude: number;
-    longitude: number;
-};
+import React, { createContext, useContext, useEffect, useState } from 'react';
+import {
+    getLastLocation,
+    saveLastLocation,
+    storage,
+    KEYS,
+} from '../utils/storage';
+import { Location } from '../types/User';
 
-type LocationContextType = {
-    location: LocationType | null;
-    updateLocation: () => Promise<void>;
-};
 
-export const LocationContext = createContext<LocationContextType | undefined>(undefined);
+interface LocationContextType {
+    lastLocation: Location | null;
+    setLocation: (location: Location) => void;
+}
 
-export const LocationProvider = ({ children }: { children: ReactNode }) => {
-    const [location, setLocation] = useState<LocationType | null>(null);
+const LocationContext = createContext<LocationContextType>({} as LocationContextType);
 
-    const updateLocation = async () => {
-        const { status } = await Location.requestForegroundPermissionsAsync();
-        if (status !== 'granted') return;
-
-        const loc = await Location.getCurrentPositionAsync({});
-        setLocation({
-            latitude: loc.coords.latitude,
-            longitude: loc.coords.longitude
-        });
-    };
+export const LocationProvider = ({ children }: { children: React.ReactNode }) => {
+    const [lastLocation, setLastLocation] = useState<Location | null>(null);
 
     useEffect(() => {
-        updateLocation();
+        const load = async () => {
+            const loc = await getLastLocation();
+            if (loc) setLastLocation(loc);
+        };
+        load();
     }, []);
 
+    const setLocation = (location: Location) => {
+        setLastLocation(location);
+        saveLastLocation(location);
+    };
+
     return (
-        <LocationContext.Provider value={{ location, updateLocation }}>
+        <LocationContext.Provider value={{ lastLocation, setLocation }}>
             {children}
         </LocationContext.Provider>
     );
 };
+
+export const useLocation = () => useContext(LocationContext);
+export {LocationContext}

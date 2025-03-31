@@ -7,7 +7,7 @@ import { useFocusEffect } from '@react-navigation/native';
 
 const MapScreen = () => {
     const { products, fetchProducts } = useProducts();
-    const { location } = useLocation();
+    const { location }:any = useLocation();
 
     const initialRegion: Region = {
         latitude: location?.latitude || 32.0853,

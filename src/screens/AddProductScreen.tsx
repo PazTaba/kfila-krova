@@ -7,9 +7,9 @@ import { Feather } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Location from 'expo-location';
 import { useFocusEffect } from '@react-navigation/native';
-import { useProducts } from '../hooks/useProducts'; // ✅ ייבוא hook של products
+import { useProducts } from '../hooks/useProducts';
 
-export default function AddProductScreen({ navigation }: any) {
+export default function AddProductScreen({ navigation, route }: any) {
     const [name, setName] = useState('');
     const [description, setDescription] = useState('');
     const [price, setPrice] = useState('');
@@ -19,7 +19,7 @@ export default function AddProductScreen({ navigation }: any) {
     const [condition, setCondition] = useState('');
     const [address, setAddress] = useState('');
 
-    const { fetchProducts } = useProducts(); // ✅ שימוש ב-fetchProducts מה-context
+    const { fetchProducts } = useProducts();
 
     const pickImage = async () => {
         const result = await ImagePicker.launchImageLibraryAsync({
@@ -81,18 +81,18 @@ export default function AddProductScreen({ navigation }: any) {
 
             if (!response.ok) throw new Error(data.message || 'Unknown error');
 
+            // Fetch products to update the context
+            await fetchProducts();
+
             Alert.alert('הצלחה', 'המוצר נוסף בהצלחה');
 
-            await fetchProducts(); // ✅ רענון רשימת מוצרים מהשרת
-
-            navigation.goBack(); // ✅ חזרה למסך הקודם כדי ש־useFocusEffect ירענן
+            // Navigate back to home with a refresh parameter
+            navigation.goBack();
         } catch (error: any) {
             Alert.alert('שגיאה', 'אירעה שגיאה בהוספה');
             console.error(error);
         }
     };
-
-
 
     return (
         <View style={styles.container}>

@@ -1,51 +1,54 @@
-import React, { createContext, useState, useEffect, ReactNode } from 'react';
+// contexts/CategoriesContext.tsx
 
-type Category = {
-    id: string;
-    name: string;
-    icon: string;
-    color: string;
-};
+import React, { createContext, useContext, useEffect, useState } from 'react';
+import { getCategories, saveCategories } from '../utils/storage';
+import { Category } from '../types/Category';
 
-type CategoriesContextType = {
+// contexts/CategoriesContext.tsx
+
+interface CategoriesContextType {
     categories: Category[];
-    fetchCategories: () => Promise<void>;
+    refreshCategories: (serverData: Category[]) => void;
     getCategoryName: (id: string) => string;
     getCategoryIcon: (id: string) => string;
-};
+}
 
-export const CategoriesContext = createContext<CategoriesContextType | undefined>(undefined);
 
-export const CategoriesProvider = ({ children }: { children: ReactNode }) => {
+const CategoriesContext = createContext<CategoriesContextType>({} as CategoriesContextType);
+
+export const CategoriesProvider = ({ children }: { children: React.ReactNode }) => {
     const [categories, setCategories] = useState<Category[]>([]);
 
-    const fetchCategories = async () => {
-        try {
-            const res = await fetch('http://172.20.10.3:3000/categories');
-            const data = await res.json();
-            setCategories(data);
-        } catch (err) {
-            console.error('שגיאה בטעינת קטגוריות:', err);
-        }
+    useEffect(() => {
+        const load = async () => {
+            const local = await getCategories();
+            if (local) setCategories(local);
+        };
+        load();
+    }, []);
+
+    const refreshCategories = (serverData: Category[]) => {
+        setCategories(serverData);
+        saveCategories(serverData);
     };
 
     const getCategoryName = (id: string): string => {
-        const category = categories.find((cat) => cat.id === id);
-        return category?.name || id;
+        const category = categories.find((c) => c._id === id);
+        return category?.name || 'לא ידוע';
     };
 
     const getCategoryIcon = (id: string): string => {
-        const category = categories.find((cat) => cat.id === id);
-        return category?.icon || '🌐';
+        const category = categories.find((c) => c._id === id);
+        return category?.icon || '❓';
     };
 
-    useEffect(() => {
-        fetchCategories();
-    }, []);
-
     return (
-        <CategoriesContext.Provider value={{ categories, fetchCategories, getCategoryName, getCategoryIcon }}>
+        <CategoriesContext.Provider value={{ categories, refreshCategories, getCategoryName, getCategoryIcon }}>
             {children}
         </CategoriesContext.Provider>
     );
 };
+
+
+export const useCategories = () => useContext(CategoriesContext);
+export { CategoriesContext };

@@ -4,14 +4,15 @@ import {
     KeyboardAvoidingView, Platform, Alert, ActivityIndicator
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Location from 'expo-location';
 
 import { RegisterScreenProps } from '../navigation/navigation-types';
 import { User, Location as UserLocation, Gender } from '../types/User';
 import { AuthResponse, ApiError } from '../types/api';
+import { useLocation } from '../contexts/LocationContext';
+import { updateUserLocation } from '../utils/updateUserLocation';
 import { useUser } from '../hooks/useUser';
-import { useLocation } from '../hooks/useLocation';
+
 
 const API_BASE_URL = 'http://172.20.10.3:3000';
 
@@ -65,7 +66,8 @@ function RegisterScreen({ navigation }: RegisterScreenProps): React.JSX.Element 
     const [isLoading, setIsLoading] = useState(false);
 
     const { login } = useUser();
-    const { updateLocation } = useLocation();
+    const { setLocation } = useLocation();
+
 
     const handleRegister = async () => {
         if (!name || !email || !password || !confirmPassword || !age) {
@@ -97,7 +99,8 @@ function RegisterScreen({ navigation }: RegisterScreenProps): React.JSX.Element 
                     longitude: result.coords.longitude,
                 };
 
-                await updateLocation(); // שמירת מיקום ב־Context
+                await updateUserLocation(setLocation); // שמירה גם ב־AsyncStorage וגם בקונטקסט
+
             }
 
             const body = {
