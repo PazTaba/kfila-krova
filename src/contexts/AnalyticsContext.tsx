@@ -15,7 +15,7 @@ interface AnalyticsContextType {
     trackLocationChange: (latitude: number, longitude: number) => void;
 }
 
-const AnalyticsContext = createContext<AnalyticsContextType>({} as AnalyticsContextType);
+export const AnalyticsContext = createContext<AnalyticsContextType>({} as AnalyticsContextType);
 
 export const AnalyticsProvider = ({ children }: { children: React.ReactNode }) => {
     const { user } = useUser();
@@ -115,4 +115,3 @@ export const AnalyticsProvider = ({ children }: { children: React.ReactNode }) =
     );
 };
 
-export const useAnalytics = () => useContext(AnalyticsContext);
