@@ -17,10 +17,15 @@ import {
     ConsultationDetailsScreenNavigationProp,
     Answer,
 } from '../navigation/navigation-types';
-import { RegisterRequestBody } from '../types/User';
+
+import { useAnalytics } from '../hooks/useAnalytics'; // הוספה
+
+
+
 
 
 export default function ConsultationDetailsScreen() {
+    const { trackScreen, trackItemView, trackFavorite } = useAnalytics(); // הוספה
     const route = useRoute<ConsultationDetailsScreenRouteProp>();
     const navigation = useNavigation<ConsultationDetailsScreenNavigationProp>();
     const { consultation } = route.params;
@@ -29,7 +34,15 @@ export default function ConsultationDetailsScreen() {
     const [answers, setAnswers] = useState<Answer[]>(consultation.answers || []);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [userName, setUserName] = useState<string>('');
-    const [isLiking, setIsLiking] = useState<{[key: string]: boolean}>({});  // להצגת מצב טעינה ללייקים
+    const [isLiking, setIsLiking] = useState<{ [key: string]: boolean }>({});
+    useEffect(() => {
+        trackScreen('ConsultationDetailsScreen');
+        trackItemView(consultation._id, 'consultation');
+        trackFavorite(consultation._id, 'consultation', true); // או false להסרה
+
+    }, []);
+
+
 
     useEffect(() => {
         const getUserData = async () => {
@@ -80,7 +93,7 @@ export default function ConsultationDetailsScreen() {
     const handleLike = async (answerId: string) => {
         // עדכון מצב הטעינה ללייק הספציפי
         setIsLiking(prev => ({ ...prev, [answerId]: true }));
-        
+
         try {
             const response = await fetch(`http://172.20.10.3:3000/consultations/${consultation._id}/answers/${answerId}/like`, {
                 method: 'POST',
@@ -93,9 +106,9 @@ export default function ConsultationDetailsScreen() {
 
             if (response.ok) {
                 // עדכון ה-state המקומי
-                setAnswers(prev => prev.map(answer => 
-                    answer.id === answerId 
-                        ? { ...answer, likes: (answer.likes || 0) + 1 } 
+                setAnswers(prev => prev.map(answer =>
+                    answer.id === answerId
+                        ? { ...answer, likes: (answer.likes || 0) + 1 }
                         : answer
                 ));
             } else {
@@ -109,7 +122,7 @@ export default function ConsultationDetailsScreen() {
         }
     };
 
-    const sortedAnswers = [...answers].sort((a, b) => (b.likes || 0) - (a.likes || 0)); 
+    const sortedAnswers = [...answers].sort((a, b) => (b.likes || 0) - (a.likes || 0));
 
     return (
         <View style={styles.container}>
@@ -135,32 +148,32 @@ export default function ConsultationDetailsScreen() {
 
                 {sortedAnswers.length > 0 ? (
                     sortedAnswers.map((answer, index) => (
-                        <View 
-                            key={answer.id} 
+                        <View
+                            key={answer.id}
                             style={[
-                                styles.answerCard, 
+                                styles.answerCard,
                                 index === 0 ? styles.topAnswerCard : null
                             ]}
                         >
                             <View style={styles.answerCardHeader}>
-                                <TouchableOpacity 
+                                <TouchableOpacity
                                     style={styles.answerLikesContainer}
                                     onPress={() => handleLike(answer.id)}
                                     disabled={isLiking[answer.id]}
                                 >
-                                    <Feather 
+                                    <Feather
                                         name={isLiking[answer.id] ? "loader" : "thumbs-up"}
-                                        size={16} 
-                                        color="#4A90E2" 
+                                        size={16}
+                                        color="#4A90E2"
                                     />
                                     <Text style={styles.answerLikesText}>{answer.likes || 0}</Text>
                                 </TouchableOpacity>
                                 {index === 0 && (
-                                    <Feather 
-                                        name="check-circle" 
-                                        size={20} 
-                                        color="#4CAF50" 
-                                        style={styles.topAnswerBadge} 
+                                    <Feather
+                                        name="check-circle"
+                                        size={20}
+                                        color="#4CAF50"
+                                        style={styles.topAnswerBadge}
                                     />
                                 )}
                             </View>

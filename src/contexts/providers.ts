@@ -9,8 +9,11 @@ import { DraftProvider } from './DraftContext';
 import { SearchProvider } from './SearchContext';
 import { JobsProvider } from './JobsContext';
 import { ProductsProvider } from './ProductsContext';
+import { AnalyticsProvider } from './AnalyticsContext'; // ✅ חדש!
+
 export const providers = [
     UserProvider,
+    AnalyticsProvider,
     LocationProvider,
     PreferencesProvider,
     CategoriesProvider,

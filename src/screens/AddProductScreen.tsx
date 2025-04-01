@@ -8,8 +8,11 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Location from 'expo-location';
 import { useFocusEffect } from '@react-navigation/native';
 import { useProducts } from '../hooks/useProducts';
+import { useAnalytics } from '../hooks/useAnalytics';
+
 
 export default function AddProductScreen({ navigation, route }: any) {
+    
     const [name, setName] = useState('');
     const [description, setDescription] = useState('');
     const [price, setPrice] = useState('');

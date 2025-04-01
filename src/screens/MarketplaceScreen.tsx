@@ -7,9 +7,12 @@ import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { Feather } from '@expo/vector-icons';
 import { useCategories } from '../hooks/useCategories';
 import { useProducts } from '../hooks/useProducts';
+import { useAnalytics } from '../hooks/useAnalytics';
+import analyticsService from '../services/analyticsService';
+
 
 export default function MarketplaceScreen() {
-
+    const { trackScreen, trackSearch, trackItemView, trackLocationChange, trackFavorite, trackContact, trackShare } = useAnalytics();
     const navigation = useNavigation<any>();
     const { categories } = useCategories();
     const { products, fetchProducts } = useProducts();
@@ -33,6 +36,10 @@ export default function MarketplaceScreen() {
         filterProducts();
     }, [products, selectedCategory, searchQuery, activeFilters]);
 
+    useEffect(() => {
+        trackScreen('MarketplaceScreen');
+    }, []);
+
     const filterProducts = () => {
         let filtered = [...products];
 
@@ -44,7 +51,10 @@ export default function MarketplaceScreen() {
             filtered = filtered.filter(p =>
                 p.name.toLowerCase().includes(searchQuery.toLowerCase())
             );
+
+            trackSearch(searchQuery, filtered.length);
         }
+
 
         if (activeFilters.minPrice !== undefined) {
             filtered = filtered.filter(p => p.price >= activeFilters.minPrice!);
@@ -66,14 +76,25 @@ export default function MarketplaceScreen() {
         const [maxPrice, setMaxPrice] = useState<string>('');
         const [maxDistance, setMaxDistance] = useState<string>('');
 
+        const { trackScreen } = useAnalytics();
+
         const applyFilters = () => {
-            setActiveFilters({
+            const filters = {
                 minPrice: minPrice ? parseFloat(minPrice) : undefined,
                 maxPrice: maxPrice ? parseFloat(maxPrice) : undefined,
                 maxDistance: maxDistance ? parseFloat(maxDistance) : undefined,
-            });
+            };
+
+            setActiveFilters(filters);
             setIsFiltersModalVisible(false);
+
+            // שליחת אנליטיקה
+            trackScreen('FiltersApplied'); // מעקב כללי על שימוש בפילטרים
+
+            // מעקב אנליטי מדויק (אם יש לך trackFilterApplied ב־analyticsService)
+            analyticsService.trackFilterApplied(filters);
         };
+
 
         const resetFilters = () => {
             setMinPrice('');
@@ -227,7 +248,11 @@ export default function MarketplaceScreen() {
                             key={product._id}
                             style={styles.card}
                             activeOpacity={0.7}
-                            onPress={() => navigation.navigate('Products', { productId: product._id })}
+                            onPress={() => {
+                                trackItemView(product._id, 'product');
+                                navigation.navigate('Products', { productId: product._id });
+                            }}
+
                         >
                             <Image
                                 source={{ uri: `http://172.20.10.3:3000${product.image}` }}
