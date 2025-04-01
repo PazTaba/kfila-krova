@@ -34,6 +34,7 @@ function HomeScreen({ navigation }: any) {
 
 
 
+
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [matchRadius, setMatchRadius] = useState(5);
   const [showRadiusModal, setShowRadiusModal] = useState(true);
@@ -42,6 +43,7 @@ function HomeScreen({ navigation }: any) {
   const [actionPanelAnim] = useState(new Animated.Value(100));
 
   const [selectedSort, setSelectedSort] = useState('distance');
+  const { logout } = useUser();
 
   useEffect(() => {
     // מעקב אחר מעבר למסך הבית
@@ -97,11 +99,15 @@ function HomeScreen({ navigation }: any) {
     });
   };
 
-  const handleLogout = async () => {
-    await AsyncStorage.removeItem('token');
-    await AsyncStorage.removeItem('userId');    
-    navigation.reset({ index: 0, routes: [{ name: 'Login' }] });
 
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+      navigation.reset({ index: 0, routes: [{ name: 'Login' }] });
+    } catch (error) {
+      console.error('שגיאה ביציאה:', error);
+    }
   };
 
   const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen);

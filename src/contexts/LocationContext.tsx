@@ -40,5 +40,4 @@ export const LocationProvider = ({ children }: { children: React.ReactNode }) =>
     );
 };
 
-export const useLocation = () => useContext(LocationContext);
 export {LocationContext}

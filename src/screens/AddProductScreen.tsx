@@ -9,10 +9,12 @@ import * as Location from 'expo-location';
 import { useFocusEffect } from '@react-navigation/native';
 import { useProducts } from '../hooks/useProducts';
 import { useAnalytics } from '../hooks/useAnalytics';
+import { useLocation } from '../hooks/useLocation';
+
 
 
 export default function AddProductScreen({ navigation, route }: any) {
-    
+
     const [name, setName] = useState('');
     const [description, setDescription] = useState('');
     const [price, setPrice] = useState('');
@@ -21,6 +23,7 @@ export default function AddProductScreen({ navigation, route }: any) {
     const [category, setCategory] = useState('');
     const [condition, setCondition] = useState('');
     const [address, setAddress] = useState('');
+    const { lastLocation } = useLocation();
 
     const { fetchProducts } = useProducts();
 
@@ -51,8 +54,7 @@ export default function AddProductScreen({ navigation, route }: any) {
                 return;
             }
 
-            const location = await Location.getCurrentPositionAsync({});
-            const { latitude, longitude } = location.coords;
+
 
             const formData = new FormData();
             formData.append('name', name);
@@ -63,9 +65,8 @@ export default function AddProductScreen({ navigation, route }: any) {
             formData.append('condition', condition);
             formData.append('address', address);
             formData.append('userId', userId);
-            formData.append('latitude', latitude.toString());
-            formData.append('longitude', longitude.toString());
-
+            formData.append('latitude', String(lastLocation?.latitude || 0));
+            formData.append('longitude', String(lastLocation?.longitude || 0));
             formData.append('image', {
                 uri: image,
                 name: 'product.jpg',
