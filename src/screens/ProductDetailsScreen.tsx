@@ -21,6 +21,7 @@ import { BlurView } from 'expo-blur';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useCategories } from '../hooks/useCategories';
 import { useProducts } from '../hooks/useProducts';
+import { trackItemView } from '../utils/userAnalytics';
 
 const ProductDetailsScreen = () => {
     const navigation = useNavigation();
@@ -37,23 +38,39 @@ const ProductDetailsScreen = () => {
 
     useEffect(() => {
         const fetchProduct = async () => {
-            const result = await getProductById(productId);
-            setProduct(result);
-            setLoading(false);
+            try {
+                const result = await getProductById(productId);
+                setProduct(result);
+                setLoading(false);
+
+                // trackItemView רק אחרי שהמוצר נטען
+                if (result) {
+                    trackItemView('product', productId, {
+                        productName: result.name,
+                        productCategory: result.category
+                    });
+                }
+            } catch (error) {
+                console.error('שגיאה בטעינת המוצר:', error);
+                setLoading(false);
+                Alert.alert('שגיאה', 'לא ניתן לטעון את המוצר');
+            }
         };
         fetchProduct();
         checkIfFavorite();
     }, [productId]);
 
     const checkIfFavorite = async () => {
-        try {
-            const favorites = await AsyncStorage.getItem('favorites');
-            if (favorites) {
-                const favoritesArray = JSON.parse(favorites);
-                setIsFavorite(favoritesArray.includes(productId));
+        if (product) {
+            try {
+                const favorites = await AsyncStorage.getItem('favorites');
+                if (favorites) {
+                    const favoritesArray = JSON.parse(favorites);
+                    setIsFavorite(favoritesArray.includes(productId));
+                }
+            } catch (error) {
+                console.error('שגיאה בבדיקת מועדפים:', error);
             }
-        } catch (error) {
-            console.error('שגיאה בבדיקת מועדפים:', error);
         }
     };
 
@@ -137,7 +154,6 @@ const ProductDetailsScreen = () => {
                     setLoading(true);
                     getProductById(productId).then(setProduct).finally(() => setLoading(false));
                 }}>
-
                     <Text>נסה שוב</Text>
                 </TouchableOpacity>
             </View>
@@ -334,6 +350,7 @@ const ProductDetailsScreen = () => {
         </SafeAreaView>
     );
 };
+
 
 const { width } = Dimensions.get('window');
 

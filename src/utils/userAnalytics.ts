@@ -20,6 +20,7 @@ export enum EventType {
     LOCATION_CHANGE = 'location_change',
     SESSION_START = 'session_start',
     SESSION_END = 'session_end',
+    VIEW_SCREEN = 'view_screen',
 }
 
 // מבנה אירוע אנליטיקה

@@ -24,7 +24,7 @@ import { useLocation } from '../hooks/useLocation';
 import { useCategories } from '../hooks/useCategories';
 import { useProducts } from '../hooks/useProducts';
 import { useUser } from '../hooks/useUser';
-
+import { EventType, userAnalytics } from '../utils/userAnalytics';
 function HomeScreen({ navigation }: any) {
   const { jobs, fetchJobs } = useJobs();
   const { lastLocation, setLocation } = useLocation();
@@ -42,6 +42,13 @@ function HomeScreen({ navigation }: any) {
   const [actionPanelAnim] = useState(new Animated.Value(100));
 
   const [selectedSort, setSelectedSort] = useState('distance');
+
+  useEffect(() => {
+    // מעקב אחר מעבר למסך הבית
+    userAnalytics.trackEvent(EventType.VIEW_SCREEN, {
+      screenName: 'HomeScreen'
+    });
+  }, []);
 
   useFocusEffect(
     useCallback(() => {
@@ -92,8 +99,9 @@ function HomeScreen({ navigation }: any) {
 
   const handleLogout = async () => {
     await AsyncStorage.removeItem('token');
-    await AsyncStorage.removeItem('userId');
+    await AsyncStorage.removeItem('userId');    
     navigation.reset({ index: 0, routes: [{ name: 'Login' }] });
+
   };
 
   const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen);
@@ -125,6 +133,11 @@ function HomeScreen({ navigation }: any) {
     };
     setLocation(newLoc);
     Alert.alert('עדכון מיקום', 'המיקום עודכן בהצלחה!');
+    userAnalytics.trackEvent(EventType.LOCATION_CHANGE, {
+      latitude: newLoc.latitude,
+      longitude: newLoc.longitude
+    });
+
   };
 
   // ⏳ מראה רק אם המיקום מוכן

@@ -16,6 +16,7 @@ import { LoginScreenProps } from '../navigation/navigation-types';
 import { updateUserLocation } from '../utils/updateUserLocation';
 import { User } from '../types/User';
 import { useUser } from '../hooks/useUser';
+import { EventType, userAnalytics } from '../utils/userAnalytics';
 
 
 
@@ -63,6 +64,7 @@ function LoginScreen({ navigation }: LoginScreenProps): React.JSX.Element {
         } finally {
             setIsLoading(false);
         }
+
     };
 
     const navigateToRegister = () => {
