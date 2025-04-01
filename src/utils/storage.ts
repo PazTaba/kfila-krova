@@ -1,3 +1,4 @@
+// src/utils/storage.ts (מעודכן)
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // 🗝️ מפתחות שמורים
@@ -42,6 +43,18 @@ export const KEYS = {
   THEME: 'theme',
   DEVICE_TYPE: 'deviceType',
   INTRO_SEEN: 'introSeen',
+
+  // 📊 אנליטיקה ומעקב שימוש
+  ANALYTICS_EVENTS: 'analyticsEvents',
+  ANALYTICS_USAGE_DATA: 'analyticsUsageData',
+  USER_BEHAVIOR_PATTERNS: 'userBehaviorPatterns',
+  FEATURE_USAGE_STATS: 'featureUsageStats',
+  SESSION_DATA: 'sessionData',
+
+  // 🧠 מידע על התנהגות משתמש לשיפור המלצות
+  USER_INTERESTS: 'userInterests',
+  FREQUENCY_PATTERNS: 'frequencyPatterns',
+  RECOMMENDATION_FEEDBACK: 'recommendationFeedback',
 };
 
 // 🔁 פונקציות כלליות
@@ -80,6 +93,91 @@ export const storage = {
       console.error('❌ Error clearing AsyncStorage:', err);
     }
   },
+
+  // פונקציה חדשה לאחסון ועדכון מונים
+  async incrementCounter(key: string, amount: number = 1) {
+    try {
+      const currentValue = await this.load<number>(key) || 0;
+      await this.save(key, currentValue + amount);
+      return currentValue + amount;
+    } catch (err) {
+      console.error(`❌ Error incrementing counter ${key}:`, err);
+      return null;
+    }
+  },
+
+  // פונקציה חדשה להוספת ערך לרשימה
+  async appendToList(key: string, value: any, maxItems: number = 50) {
+    try {
+      const list = await this.load<any[]>(key) || [];
+
+      // בודק אם הערך כבר קיים ברשימה
+      const exists = list.some(item =>
+        JSON.stringify(item) === JSON.stringify(value)
+      );
+
+      if (!exists) {
+        // מוסיף את הערך החדש בתחילת הרשימה
+        list.unshift(value);
+
+        // מגביל את אורך הרשימה
+        const trimmedList = list.slice(0, maxItems);
+
+        await this.save(key, trimmedList);
+      }
+
+      return list;
+    } catch (err) {
+      console.error(`❌ Error appending to list ${key}:`, err);
+      return null;
+    }
+  },
+
+  // פונקציה חדשה לשמירת טביעת אצבע של התנהגות משתמש
+  async saveUserBehaviorPattern(pattern: any) {
+    try {
+      await this.appendToList(KEYS.USER_BEHAVIOR_PATTERNS, {
+        ...pattern,
+        timestamp: new Date().toISOString()
+      }, 10);
+    } catch (err) {
+      console.error('❌ Error saving user behavior pattern:', err);
+    }
+  },
+
+  // פונקציה חדשה לשמירת פידבק על המלצות
+  async saveRecommendationFeedback(itemId: string, itemType: string, feedback: 'like' | 'dislike' | 'ignore') {
+    try {
+      const feedbackList = await this.load<any[]>(KEYS.RECOMMENDATION_FEEDBACK) || [];
+
+      // מוסיף או מעדכן פידבק קיים
+      const existingIndex = feedbackList.findIndex(item =>
+        item.itemId === itemId && item.itemType === itemType
+      );
+
+      if (existingIndex >= 0) {
+        feedbackList[existingIndex] = {
+          ...feedbackList[existingIndex],
+          feedback,
+          timestamp: new Date().toISOString()
+        };
+      } else {
+        feedbackList.push({
+          itemId,
+          itemType,
+          feedback,
+          timestamp: new Date().toISOString()
+        });
+      }
+
+      // מגביל לשמירת 50 הפידבקים האחרונים
+      const trimmedList = feedbackList.slice(-50);
+
+      await this.save(KEYS.RECOMMENDATION_FEEDBACK, trimmedList);
+    } catch (err) {
+      console.error('❌ Error saving recommendation feedback:', err);
+    }
+  }
 };
 
 // 🧩 פונקציות שימוש מהיר לדברים נפוצים:
@@ -117,3 +215,24 @@ export const getLastLocation = () => storage.load<{ latitude: number; longitude:
 // Categories
 export const saveCategories = (categories: any[]) => storage.save(KEYS.CATEGORIES, categories);
 export const getCategories = () => storage.load<any[]>(KEYS.CATEGORIES);
+
+// אנליטיקה - פונקציות מהירות חדשות
+export const saveAnalyticsEvents = (events: any[]) =>
+  storage.save(KEYS.ANALYTICS_EVENTS, events);
+export const getAnalyticsEvents = () =>
+  storage.load<any[]>(KEYS.ANALYTICS_EVENTS);
+
+export const saveUsageData = (data: any) =>
+  storage.save(KEYS.ANALYTICS_USAGE_DATA, data);
+export const getUsageData = () =>
+  storage.load<any>(KEYS.ANALYTICS_USAGE_DATA);
+
+export const incrementFeatureUsage = (featureName: string) =>
+  storage.incrementCounter(`${KEYS.FEATURE_USAGE_STATS}_${featureName}`);
+export const getFeatureUsage = (featureName: string) =>
+  storage.load<number>(`${KEYS.FEATURE_USAGE_STATS}_${featureName}`);
+
+export const saveSessionData = (data: any) =>
+  storage.save(KEYS.SESSION_DATA, data);
+export const getSessionData = () =>
+  storage.load<any>(KEYS.SESSION_DATA);

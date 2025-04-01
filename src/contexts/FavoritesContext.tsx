@@ -14,7 +14,7 @@ interface FavoritesContextType {
     isFavorite: (type: FavoriteType, id: string) => boolean;
 }
 
-const FavoritesContext = createContext<FavoritesContextType>({} as FavoritesContextType);
+export const FavoritesContext = createContext<FavoritesContextType>({} as FavoritesContextType);
 
 export const FavoritesProvider = ({ children }: { children: React.ReactNode }) => {
     const [favorites, setFavorites] = useState<Record<FavoriteType, string[]>>({
@@ -66,4 +66,3 @@ export const FavoritesProvider = ({ children }: { children: React.ReactNode }) =
     );
 };
 
-export const useFavorites = () => useContext(FavoritesContext);

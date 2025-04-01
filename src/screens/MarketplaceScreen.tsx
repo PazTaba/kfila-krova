@@ -5,8 +5,7 @@ import {
 } from 'react-native';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { Feather } from '@expo/vector-icons';
-
-import { useCategories } from '../contexts/CategoriesContext';
+import { useCategories } from '../hooks/useCategories';
 import { useProducts } from '../hooks/useProducts';
 
 export default function MarketplaceScreen() {

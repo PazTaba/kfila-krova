@@ -1,4 +1,6 @@
-import React, { useState } from 'react';
+
+
+import React, { useState, useEffect } from 'react';
 import {
   ScrollView,
   Text,
@@ -13,9 +15,12 @@ import {
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 
-// Job Interests Constants
+import { useUser } from '../hooks/useUser';
+import { useDraft } from '../hooks/useDraft';
+import { usePreferences } from '../hooks/usePreferences';
+import { useViewedItems } from '../hooks/useViewedItems';
+
 const JOB_INTERESTS = [
   { id: 'tech', name: 'טכנולוגיה', color: '#4ECDC4', icon: '💻' },
   { id: 'design', name: 'עיצוב', color: '#FF6B6B', icon: '🎨' },
@@ -28,7 +33,6 @@ const JOB_INTERESTS = [
   { id: 'customerService', name: 'שירות לקוחות', color: '#BC4749', icon: '☎️' },
 ];
 
-// Job types
 const JOB_TYPES = [
   { id: 'full', name: 'full' },
   { id: 'temp', name: 'temp' },
@@ -36,8 +40,11 @@ const JOB_TYPES = [
 
 export default function AddJobScreen() {
   const navigation = useNavigation();
+  const { token } = useUser();
+  const { getDraft, saveDraft, clearDraft } = useDraft();
+  const { preferences } = usePreferences();
+  const { markAsViewed } = useViewedItems();
 
-  // State variables for form inputs
   const [title, setTitle] = useState('');
   const [company, setCompany] = useState('');
   const [location, setLocation] = useState('');
@@ -49,23 +56,44 @@ export default function AddJobScreen() {
   const [requirements, setRequirements] = useState('');
   const [contactEmail, setContactEmail] = useState('');
   const [contactPhone, setContactPhone] = useState('');
-
-  // State for managing form steps
   const [currentStep, setCurrentStep] = useState(1);
 
-  // Function to handle submission
+  useEffect(() => {
+    const draft = getDraft('job');
+    if (draft) {
+      setTitle(draft.title || '');
+      setCompany(draft.company || '');
+      setLocation(draft.location || '');
+      setMinSalary(draft.minSalary || '');
+      setMaxSalary(draft.maxSalary || '');
+      setSelectedInterest(draft.selectedInterest || preferences.preferredCategories[0] || '');
+      setSelectedType(draft.selectedType || '');
+      setDescription(draft.description || '');
+      setRequirements(draft.requirements || '');
+      setContactEmail(draft.contactEmail || '');
+      setContactPhone(draft.contactPhone || '');
+    }
+  }, []);
+
+  useEffect(() => {
+    saveDraft('job', {
+      title, company, location, minSalary, maxSalary,
+      selectedInterest, selectedType, description,
+      requirements, contactEmail, contactPhone
+    });
+  }, [title, company, location, minSalary, maxSalary, selectedInterest, selectedType, description, requirements, contactEmail, contactPhone]);
+
   const handleSubmit = async () => {
     if (!title || !company || !location || !minSalary || !maxSalary || !selectedInterest || !selectedType) {
       Alert.alert('שגיאה', 'יש למלא את כל השדות הנדרשים');
       return;
     }
 
-    // Split requirements by new line
     const requirementsArray = requirements
       ? requirements.split('\n').filter(item => item.trim() !== '')
       : [];
 
-    const postedDate = new Date().toISOString()
+    const postedDate = new Date().toISOString();
 
     const newJob = {
       title,
@@ -73,7 +101,7 @@ export default function AddJobScreen() {
       location,
       salary: `${minSalary}-${maxSalary} ₪`,
       interest: selectedInterest,
-      type: selectedType === 'full' ? 'full' : 'temp',
+      type: selectedType,
       description,
       requirements: requirementsArray,
       contactEmail,
@@ -81,10 +109,7 @@ export default function AddJobScreen() {
       postedDate
     };
 
-    console.log('🟦 שליחת משרה לשרת:', newJob);
     try {
-      const token = await AsyncStorage.getItem('token');
-
       const response = await fetch('http://172.20.10.3:3000/jobs', {
         method: 'POST',
         headers: {
@@ -100,19 +125,17 @@ export default function AddJobScreen() {
       }
 
       const data = await response.json();
-      console.log('✅ משרה נשלחה:', data);
+      markAsViewed('jobs', data.id);
+      clearDraft('job');
 
-      Alert.alert(
-        'המשרה נוספה בהצלחה',
-        'המשרה נוספה למאגר המשרות',
-        [{ text: 'אישור', onPress: () => navigation.goBack() }]
-      );
-    } catch (error) {
+      Alert.alert('המשרה נוספה בהצלחה', 'המשרה נוספה למאגר המשרות', [
+        { text: 'אישור', onPress: () => navigation.goBack() }
+      ]);
+    } catch (error: any) {
       console.error('שגיאה בשליחת משרה:', error);
       Alert.alert('שגיאה', error.message || 'שגיאה לא צפויה');
     }
   };
-
   // Render the appropriate step based on current step
   const renderStep = () => {
     switch (currentStep) {

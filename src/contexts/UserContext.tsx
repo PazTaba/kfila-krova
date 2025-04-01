@@ -9,7 +9,9 @@ type UserContextType = {
     isLoading: boolean;
     login: (user: User, token: string) => Promise<void>;
     logout: () => Promise<void>;
+    setUser: React.Dispatch<React.SetStateAction<User | null>>;
 };
+
 
 export const UserContext = createContext<UserContextType | undefined>(undefined);
 
@@ -69,14 +71,9 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
     };
 
     return (
-        <UserContext.Provider value={{ user, token, isLoading, login, logout }}>
+        <UserContext.Provider value={{ user, token, isLoading, login, logout,setUser }}>
             {children}
         </UserContext.Provider>
     );
 };
 
-export const useUser = () => {
-    const context = useContext(UserContext);
-    if (!context) throw new Error('useUser must be used within a UserProvider');
-    return context;
-};

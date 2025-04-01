@@ -4,7 +4,7 @@ import { View, StyleSheet, SafeAreaView, StatusBar, Platform, Alert } from 'reac
 import MapView, { Circle } from 'react-native-maps';
 import * as Location from 'expo-location';
 import { useFocusEffect } from '@react-navigation/native';
-import { useJobs } from '../contexts/JobsContext';
+import { useJobs } from '../hooks/useJobs';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { updateUserLocation } from '../utils/updateUserLocation';
 
@@ -18,31 +18,29 @@ import ActionPanel from '../components/ActionPanel';
 import RadiusModal from '../components/RadiusModal';
 import FiltersModal from '../components/FiltersModal';
 import { Animated } from 'react-native';
-
-
 import { mapStyle } from '../components/mapStyle';
 import styles from '../components/homeScreenStyles';
+import { useLocation } from '../hooks/useLocation';
+import { useCategories } from '../hooks/useCategories';
+import { useProducts } from '../hooks/useProducts';
+import { useUser } from '../hooks/useUser';
 
 function HomeScreen({ navigation }: any) {
   const { jobs, fetchJobs } = useJobs();
+  const { lastLocation, setLocation } = useLocation();
+  const { user, setUser } = useUser();
+  const { products, fetchProducts } = useProducts();
+  const [selectedCategories, setSelectedCategories] = useState(['all']);
 
-  // State
-  const [currentLocation, setCurrentLocation] = useState({
-    latitude: 32.0853,
-    longitude: 34.7818,
-    latitudeDelta: 0.0922,
-    longitudeDelta: 0.0421,
-  });
+
+
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [products, setProducts] = useState([]);
   const [matchRadius, setMatchRadius] = useState(5);
   const [showRadiusModal, setShowRadiusModal] = useState(true);
   const [showFiltersModal, setShowFiltersModal] = useState(false);
-  const [user, setUser] = useState(null);
   const [showActionPanel, setShowActionPanel] = useState(false);
-  const [actionPanelAnim] = useState(new Animated.Value(100)); // ✅ נוספה ההגדרה הזו
+  const [actionPanelAnim] = useState(new Animated.Value(100));
 
-  const [selectedCategories, setSelectedCategories] = useState(['all']);
   const [selectedSort, setSelectedSort] = useState('distance');
 
   useFocusEffect(
@@ -60,7 +58,6 @@ function HomeScreen({ navigation }: any) {
     }).start();
   }, [showActionPanel]);
 
-
   useEffect(() => {
     const loadUser = async () => {
       const storedUser = await AsyncStorage.getItem('userData');
@@ -71,15 +68,7 @@ function HomeScreen({ navigation }: any) {
 
     loadUser();
 
-    (async () => {
-      const { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== 'granted') return;
-
-      const location = await Location.getCurrentPositionAsync({});
-      const { latitude, longitude } = location.coords;
-      setCurrentLocation({ latitude, longitude, latitudeDelta: 0.0922, longitudeDelta: 0.0421 });
-    })();
-
+    // מריץ עדכון מיקום כל 3 דקות
     const interval = setInterval(() => {
       updateUserLocation();
     }, 1000 * 60 * 3);
@@ -87,21 +76,13 @@ function HomeScreen({ navigation }: any) {
     return () => clearInterval(interval);
   }, []);
 
-  const fetchProducts = async () => {
-    try {
-      const response = await fetch('http://172.20.10.3:3000/products');
-      const data = await response.json();
-      setProducts(data);
-    } catch (error) {
-      console.error('❌ שגיאה בטעינת מוצרים:', error);
-    }
-  };
 
   const getNearbyProducts = () => {
+    if (!lastLocation) return [];
+    const haversine = require('haversine-distance');
     return products.filter((product) => {
-      const haversine = require('haversine-distance');
       const distance = haversine(
-        { lat: currentLocation.latitude, lon: currentLocation.longitude },
+        { lat: lastLocation.latitude, lon: lastLocation.longitude },
         //@ts-ignore
         { lat: product.latitude, lon: product.longitude }
       ) / 1000;
@@ -115,9 +96,8 @@ function HomeScreen({ navigation }: any) {
     navigation.reset({ index: 0, routes: [{ name: 'Login' }] });
   };
 
-  const toggleSidebar = () => {
-    setIsSidebarOpen(!isSidebarOpen);
-  };
+  const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen);
+
   const toggleCategory = (category: string) => {
     if (category === 'all') {
       setSelectedCategories(['all']);
@@ -131,14 +111,33 @@ function HomeScreen({ navigation }: any) {
       }
     }
   };
-  const toggleActionPanel = () => {
-    setShowActionPanel(!showActionPanel);
-  };
+
+  const toggleActionPanel = () => setShowActionPanel(!showActionPanel);
 
   const handleUpdateLocation = async () => {
-    await updateUserLocation();
+    const { status } = await Location.requestForegroundPermissionsAsync();
+    if (status !== 'granted') return;
+
+    const location = await Location.getCurrentPositionAsync({});
+    const newLoc = {
+      latitude: location.coords.latitude,
+      longitude: location.coords.longitude
+    };
+    setLocation(newLoc);
     Alert.alert('עדכון מיקום', 'המיקום עודכן בהצלחה!');
   };
+
+  // ⏳ מראה רק אם המיקום מוכן
+  if (!lastLocation) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <StatusBar barStyle="dark-content" backgroundColor="transparent" translucent />
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+          <Animated.Text>טוען מיקום...</Animated.Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.container}>
@@ -153,29 +152,28 @@ function HomeScreen({ navigation }: any) {
 
       <MapView
         style={styles.map}
-        region={currentLocation}
+        region={{
+          ...lastLocation,
+          latitudeDelta: 0.0922,
+          longitudeDelta: 0.0421,
+        }}
         showsUserLocation
         customMapStyle={mapStyle}
         showsCompass={false}
         showsMyLocationButton={false}
       >
         <Circle
-          center={{ latitude: currentLocation.latitude, longitude: currentLocation.longitude }}
+          center={lastLocation}
           radius={matchRadius * 1000}
           strokeColor="rgba(108, 92, 231, 0.6)"
           fillColor="rgba(108, 92, 231, 0.15)"
           strokeWidth={1}
         />
-        <MapMarkers
-          products={products}
-          navigation={navigation}
-        />
+        <MapMarkers products={products} navigation={navigation} />
       </MapView>
 
       {getNearbyProducts().length > 0 && (
-        <MatchBanner
-          count={getNearbyProducts().length}
-        />
+        <MatchBanner count={getNearbyProducts().length} />
       )}
 
       <ActionButton
@@ -195,14 +193,12 @@ function HomeScreen({ navigation }: any) {
         />
       )}
 
-
       <RadiusModal
         visible={showRadiusModal}
         setVisible={setShowRadiusModal}
         matchRadius={matchRadius}
         setMatchRadius={setMatchRadius}
       />
-
 
       <FiltersModal
         showFiltersModal={showFiltersModal}
@@ -212,7 +208,6 @@ function HomeScreen({ navigation }: any) {
         selectedSort={selectedSort}
         setSelectedSort={setSelectedSort}
       />
-
 
       {isSidebarOpen && (
         <Sidebar

@@ -10,7 +10,7 @@ interface ViewedContextType {
   markAsViewed: (type: ItemType, id: string) => void;
 }
 
-const ViewedItemsContext = createContext<ViewedContextType>({} as ViewedContextType);
+export const ViewedItemsContext = createContext<ViewedContextType>({} as ViewedContextType);
 
 export const ViewedItemsProvider = ({ children }: { children: React.ReactNode }) => {
   const [viewed, setViewed] = useState<Record<ItemType, string[]>>({
@@ -52,4 +52,3 @@ export const ViewedItemsProvider = ({ children }: { children: React.ReactNode })
   );
 };
 
-export const useViewedItems = () => useContext(ViewedItemsContext);

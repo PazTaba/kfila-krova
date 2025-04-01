@@ -22,7 +22,7 @@ const defaultPrefs: Preferences = {
     preferredCategories: [],
 };
 
-const PreferencesContext = createContext<PreferencesContextType>({} as PreferencesContextType);
+export const PreferencesContext = createContext<PreferencesContextType>({} as PreferencesContextType);
 
 export const PreferencesProvider = ({ children }: { children: React.ReactNode }) => {
     const [preferences, setPreferences] = useState<Preferences>(defaultPrefs);
@@ -56,4 +56,3 @@ export const PreferencesProvider = ({ children }: { children: React.ReactNode })
     );
 };
 
-export const usePreferences = () => useContext(PreferencesContext);

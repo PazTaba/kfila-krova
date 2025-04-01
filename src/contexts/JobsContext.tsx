@@ -10,7 +10,7 @@ interface JobsContextType {
     rateJob: (jobId: string, rating: number, feedback?: string) => void;
 }
 
-const JobsContext = createContext<JobsContextType>({} as JobsContextType);
+export const JobsContext = createContext<JobsContextType>({} as JobsContextType);
 
 export const JobsProvider = ({ children }: { children: React.ReactNode }) => {
     const [jobs, setJobs] = useState<Job[]>([]);
@@ -43,7 +43,7 @@ export const JobsProvider = ({ children }: { children: React.ReactNode }) => {
                     : job
             )
         );
-        // כאן תוכל לשלוח בקשה לשרת אם תרצה
+        
     };
 
     const saveJob = (jobId: string) => {
@@ -93,4 +93,3 @@ export const JobsProvider = ({ children }: { children: React.ReactNode }) => {
     );
 };
 
-export const useJobs = () => useContext(JobsContext);

@@ -11,7 +11,7 @@ interface DraftContextType {
     clearDraft: (type: DraftType) => void;
 }
 
-const DraftContext = createContext<DraftContextType>({} as DraftContextType);
+export const DraftContext = createContext<DraftContextType>({} as DraftContextType);
 
 export const DraftProvider = ({ children }: { children: React.ReactNode }) => {
     const [drafts, setDrafts] = useState<Record<DraftType, any>>({
@@ -51,4 +51,4 @@ export const DraftProvider = ({ children }: { children: React.ReactNode }) => {
     );
 };
 
-export const useDraft = () => useContext(DraftContext);
+
