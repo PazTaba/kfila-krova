@@ -3,7 +3,7 @@ import React from 'react';
 import { View, Image, Text, TouchableOpacity, StyleSheet, Platform } from 'react-native';
 import { Marker, Callout } from 'react-native-maps';
 import { Product } from '../types/Product'; // תוודא שהנתיב נכון לפי המבנה שלך
-
+import { Config } from '../config/config';
 type Props = {
     products: Product[];
     navigation: any;
@@ -18,7 +18,7 @@ const MapMarkers: React.FC<Props> = ({ products, navigation }) => {
                 tracksViewChanges={false}
             >
                 <View style={styles.markerContainer}>
-                    <Image source={{ uri: `http://172.20.10.3:3000${product.image}` }} style={styles.productImage} />
+                    <Image source={{ uri: `${Config.API_URL}${product.image}` }} style={styles.productImage} />
                 </View>
                 <Callout
                     tooltip
@@ -28,7 +28,7 @@ const MapMarkers: React.FC<Props> = ({ products, navigation }) => {
                 >
                     <View style={styles.calloutContainer}>
                         <Image
-                            source={{ uri: `http://172.20.10.3:3000${product.image}` }}
+                            source={{ uri: `${Config.API_URL}${product.image}` }}
                             style={styles.calloutImage}
                         />
                         <Text style={styles.calloutTitle}>{product.name}</Text>

@@ -2,7 +2,9 @@
 import React from 'react';
 import { View, Text, Image, TouchableOpacity, Platform } from 'react-native';
 import { Marker, Callout } from 'react-native-maps';
-import styles from '../components/homeScreenStyles';
+import styles from '../../components/homeScreenStyles';
+import { Config } from '../../config/config';
+
 
 type ProductMarkerProps = {
     product: {
@@ -23,7 +25,7 @@ const ProductMarker: React.FC<ProductMarkerProps> = ({ product, navigation }) =>
             tracksViewChanges={false}
         >
             <View style={styles.markerContainer}>
-                <Image source={{ uri: `http://172.20.10.3:3000${product.image}` }} style={styles.productImage} />
+                <Image source={{ uri: `${Config.API_URL}${product.image}` }} style={styles.productImage} />
             </View>
             <Callout
                 tooltip
@@ -34,7 +36,7 @@ const ProductMarker: React.FC<ProductMarkerProps> = ({ product, navigation }) =>
             >
                 <View style={styles.calloutContainer}>
                     <Image
-                        source={{ uri: `http://172.20.10.3:3000${product.image}` }}
+                        source={{ uri: `${Config.API_URL}${product.image}` }}
                         style={styles.calloutImage}
                     />
                     <Text style={styles.calloutTitle}>{product.name}</Text>

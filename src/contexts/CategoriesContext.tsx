@@ -1,6 +1,8 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { getCategories, saveCategories } from '../utils/storage';
 import { Category } from '../types/Category';
+import { Config } from '../config/config';
+
 
 interface CategoriesContextType {
     categories: Category[];
@@ -29,7 +31,7 @@ export const CategoriesProvider = ({ children }: { children: React.ReactNode }) 
     const fetchCategoriesFromServer = async () => {
         try {
             
-            const res = await fetch('http://172.20.10.3:3000/categories');
+            const res = await fetch(`${Config.API_URL}/categories`);
             if (!res.ok) throw new Error('שגיאה בטעינת קטגוריות מהשרת');
             const data = await res.json();
             setCategories(data);

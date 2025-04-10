@@ -10,7 +10,7 @@ import {
   Platform,
   ScrollView
 } from 'react-native';
-import { authStyles } from '../styles/AuthStyles';
+import { authStyles } from '../../styles/AuthStyles';
 import * as Location from 'expo-location';
 
 type AuthMode = 'login' | 'register';

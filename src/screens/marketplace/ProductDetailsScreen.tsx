@@ -19,9 +19,11 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useCategories } from '../hooks/useCategories';
-import { useProducts } from '../hooks/useProducts';
-import { trackItemView } from '../utils/userAnalytics';
+import { useCategories } from '../../hooks/useCategories';
+import { useProducts } from '../../hooks/useProducts';
+import { useAnalytics } from '../../hooks/useAnalytics';
+import { Config } from '../../config/config';
+
 
 const ProductDetailsScreen = () => {
     const navigation = useNavigation();
@@ -36,6 +38,8 @@ const ProductDetailsScreen = () => {
     const [isFavorite, setIsFavorite] = useState(false);
     const [showContactModal, setShowContactModal] = useState(false);
 
+    const { trackItemView, trackShare, trackFavorite } = useAnalytics();
+
     useEffect(() => {
         const fetchProduct = async () => {
             try {
@@ -43,15 +47,10 @@ const ProductDetailsScreen = () => {
                 setProduct(result);
                 setLoading(false);
 
-                // trackItemView רק אחרי שהמוצר נטען
                 if (result) {
-                    trackItemView('product', productId, {
-                        productName: result.name,
-                        productCategory: result.category
-                    });
+                    trackItemView('product', productId);
                 }
             } catch (error) {
-                console.error('שגיאה בטעינת המוצר:', error);
                 setLoading(false);
                 Alert.alert('שגיאה', 'לא ניתן לטעון את המוצר');
             }
@@ -59,6 +58,8 @@ const ProductDetailsScreen = () => {
         fetchProduct();
         checkIfFavorite();
     }, [productId]);
+
+
 
     const checkIfFavorite = async () => {
         if (product) {
@@ -76,6 +77,7 @@ const ProductDetailsScreen = () => {
 
     const toggleFavorite = async () => {
         try {
+            trackFavorite(productId, 'product', !isFavorite);
             let favorites = await AsyncStorage.getItem('favorites');
             let favoritesArray = favorites ? JSON.parse(favorites) : [];
 
@@ -101,6 +103,7 @@ const ProductDetailsScreen = () => {
             await Share.share({
                 message: `בדוק את המוצר הזה: ${product?.name} במחיר ${product?.price}₪`,
             });
+            trackShare(productId, 'product', 'share_dialog');
         } catch (error) {
             console.error('שגיאה בשיתוף המוצר:', error);
         }
@@ -167,7 +170,7 @@ const ProductDetailsScreen = () => {
             {/* Header Image */}
             <View style={styles.imageContainer}>
                 <Image
-                    source={{ uri: `http://172.20.10.3:3000${product.image}` }}
+                    source={{ uri: `${Config.API_URL}${product.image}` }}
                     style={styles.productImage}
                     resizeMode="cover"
                 />
@@ -266,7 +269,7 @@ const ProductDetailsScreen = () => {
                     <Text style={styles.sectionTitle}>פרטי המוכר</Text>
                     <View style={styles.ownerContainer}>
                         <Image
-                            source={{ uri: `http://172.20.10.3:3000${product.ownerImage}` }}
+                            source={{ uri: `${Config.API_URL}${product.ownerImage}` }}
                             style={styles.ownerImage}
                         />
                         <View style={styles.ownerInfo}>

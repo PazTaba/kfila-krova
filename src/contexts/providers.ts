@@ -7,14 +7,14 @@ import { ViewedItemsProvider } from './ViewedItemsContext';
 import { CategoriesProvider } from './CategoriesContext';
 import { DraftProvider } from './DraftContext';
 import { SearchProvider } from './SearchContext';
-import { JobsProvider } from './JobsContext';
-import { ProductsProvider } from './ProductsContext';
-import { AnalyticsProvider } from './AnalyticsContext'; // ✅ חדש!
+import { JobsProvider } from './jobs/JobsContext';
+import { ProductsProvider } from './marketplace/ProductsContext';
+import { AnalyticsProvider } from './AnalyticsContext';
 
 export const providers = [
     UserProvider,
-    AnalyticsProvider,
     LocationProvider,
+    AnalyticsProvider,
     PreferencesProvider,
     CategoriesProvider,
     ProductsProvider,
@@ -22,5 +22,5 @@ export const providers = [
     ViewedItemsProvider,
     DraftProvider,
     SearchProvider,
-    JobsProvider
+    JobsProvider,
 ];

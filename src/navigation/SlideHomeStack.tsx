@@ -2,15 +2,15 @@
 import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import ProfileScreen from '../screens/ProfileScreen';
-import SettingsScreen from '../screens/SettingsScreen';
+import ProfileScreen from '../screens/home/ProfileScreen';
+import SettingsScreen from '../screens/home/SettingsScreen';
 
 import { RootStackParamList } from './navigation-types';
-import HomeScreen from '../screens/HomeScreen';
-import ProductDetailsScreen from '../screens/ProductDetailsScreen';
-import FavoritesScreen from '../screens/FavoritesScreen';
-import HistoryScreen from '../screens/HistoryScreen';
-import AddProductScreen from '../screens/AddProductScreen';
+import HomeScreen from '../screens/home/HomeScreen';
+import ProductDetailsScreen from '../screens/marketplace/ProductDetailsScreen';
+import FavoritesScreen from '../screens/home/FavoritesScreen';
+import HistoryScreen from '../screens/home/HistoryScreen';
+import AddProductScreen from '../screens/marketplace/AddProductScreen';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 

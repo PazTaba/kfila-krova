@@ -1,15 +1,12 @@
 import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
-import HomeScreen from '../screens/HomeScreen';
-import MarketplaceScreen from '../screens/MarketplaceScreen';
-import ConsultationScreen from '../screens/ConsultationScreen'; // כאן אתה יכול להוסיף את מסך הייעוץ
-import JobsScreen from '../screens/JobsScreen';
-import CommunityScreen from '../screens/CommunityScreen';
+import CommunityScreen from '../screens/community/CommunityScreen';
 import ConsultationStack from './ConsultationStack';
 import MarketplaceStack from './MarketplaceStack';
 import SlideHomeStack from './SlideHomeStack';
 import JobsStack from './JobsStack';
+import CommunityStack from './CommunityStack';
 
 const Tab = createBottomTabNavigator();
 
@@ -56,7 +53,7 @@ export default function MainTabNavigator() {
             <Tab.Screen name="Marketplace" component={MarketplaceStack} />
             <Tab.Screen name="Consultation" component={ConsultationStack} />
             <Tab.Screen name="Jobs" component={JobsStack} />
-            <Tab.Screen name="Community" component={CommunityScreen} />
+            <Tab.Screen name="Community" component={CommunityStack} />
         </Tab.Navigator>
     );
 }

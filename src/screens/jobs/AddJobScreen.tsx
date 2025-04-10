@@ -16,10 +16,11 @@ import {
 import { Feather } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 
-import { useUser } from '../hooks/useUser';
-import { useDraft } from '../hooks/useDraft';
-import { usePreferences } from '../hooks/usePreferences';
-import { useViewedItems } from '../hooks/useViewedItems';
+import { useUser } from '../../hooks/useUser';
+import { useDraft } from '../../hooks/useDraft';
+import { usePreferences } from '../../hooks/usePreferences';
+import { useViewedItems } from '../../hooks/useViewedItems';
+
 
 const JOB_INTERESTS = [
   { id: 'tech', name: 'טכנולוגיה', color: '#4ECDC4', icon: '💻' },
@@ -110,7 +111,7 @@ export default function AddJobScreen() {
     };
 
     try {
-      const response = await fetch('http://172.20.10.3:3000/jobs', {
+      const response = await fetch(`http://172.20.10.3:3000/jobs`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

@@ -3,7 +3,8 @@
 import * as Location from 'expo-location';
 import { Location as UserLocation } from '../types/User';
 import { storage, KEYS } from './storage';
-import AnalyticsService from '../services/analyticsService';
+import { analyticsService } from '../services/analyticsService';
+
 
 /**
  * פונקציה לקבלת מיקום, שמירה ב-AsyncStorage ועדכון בקונטקסט
@@ -35,7 +36,7 @@ export const updateUserLocation = async (
     }
 
     // שליחת נתוני מיקום לאנליטיקס
-    AnalyticsService.trackLocationChange(coords.latitude, coords.longitude);
+    analyticsService.trackLocationChange(coords.latitude, coords.longitude);
 
     return currentLocation;
   } catch (err) {

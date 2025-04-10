@@ -20,7 +20,7 @@ export interface JobRating {
   export type JobStatus = 'active' | 'expired' | 'hidden';
   
   export interface Job {
-    id: string;
+    _id: string;
     title: string;
     company: string;
     type: JobType;

@@ -12,15 +12,16 @@ import {
     ActivityIndicator,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { LoginScreenProps } from '../navigation/navigation-types';
-import { updateUserLocation } from '../utils/updateUserLocation';
-import { User } from '../types/User';
-import { useUser } from '../hooks/useUser';
-import { EventType, userAnalytics } from '../utils/userAnalytics';
+import { LoginScreenProps } from '../../navigation/navigation-types';
+import { updateUserLocation } from '../../utils/updateUserLocation';
+import { User } from '../../types/User';
+import { useUser } from '../../hooks/useUser';
+import { Config } from '../../config/config';
 
 
 
-const API_BASE_URL = 'http://172.20.10.3:3000';
+
+
 
 function LoginScreen({ navigation }: LoginScreenProps): React.JSX.Element {
     const [email, setEmail] = useState('');
@@ -39,7 +40,7 @@ function LoginScreen({ navigation }: LoginScreenProps): React.JSX.Element {
         setIsLoading(true);
 
         try {
-            const response = await fetch(`${API_BASE_URL}/auth/login`, {
+            const response = await fetch(`${Config.API_URL}/auth/login`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ email, password }),
@@ -48,7 +49,7 @@ function LoginScreen({ navigation }: LoginScreenProps): React.JSX.Element {
             const data = await response.json();
 
             if (response.ok) {
-                await updateUserLocation(); // שמירת מיקום נוכחי ב־AsyncStorage או קונטקסט
+                await updateUserLocation();
 
                 const userData: User = data.user;
                 const token: string = data.token;

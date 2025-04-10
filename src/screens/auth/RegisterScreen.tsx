@@ -6,15 +6,14 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import * as Location from 'expo-location';
 
-import { RegisterScreenProps } from '../navigation/navigation-types';
-import { User, Location as UserLocation, Gender } from '../types/User';
-import { AuthResponse, ApiError } from '../types/api';
-import { useLocation } from '../contexts/LocationContext';
-import { updateUserLocation } from '../utils/updateUserLocation';
-import { useUser } from '../hooks/useUser';
+import { RegisterScreenProps } from '../../navigation/navigation-types';
+import { User, Location as UserLocation, Gender } from '../../types/User';
+import { AuthResponse, ApiError } from '../../types/api';
+import { useLocation } from '../../hooks/useLocation';
+import { updateUserLocation } from '../../utils/updateUserLocation';
+import { useUser } from '../../hooks/useUser';
+import { Config } from '../../config/config';
 
-
-const API_BASE_URL = 'http://172.20.10.3:3000';
 
 const GenderSelection = ({ selectedGender, onGenderChange }: {
     selectedGender: Gender;
@@ -113,7 +112,7 @@ function RegisterScreen({ navigation }: RegisterScreenProps): React.JSX.Element 
                 location: userLocation,
             };
 
-            const response = await fetch(`${API_BASE_URL}/auth/register`, {
+            const response = await fetch(`${Config.API_URL}/auth/register`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(body),

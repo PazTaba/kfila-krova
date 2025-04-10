@@ -1,6 +1,8 @@
 // src/contexts/ProductsContext.tsx
 import React, { createContext, useState, useEffect, ReactNode } from 'react';
-import { Product } from '../types/Product';
+import { Product } from '../../types/Product';
+import { Config } from '../../config/config';
+
 
 type ProductsContextType = {
     products: Product[];
@@ -15,8 +17,10 @@ export const ProductsProvider = ({ children }: { children: ReactNode }) => {
 
     const fetchProducts = async () => {
         try {
-            const res = await fetch('http://172.20.10.3:3000/products');
+            const res = await fetch(`${Config.API_URL}/products`);
+
             const data = await res.json();
+            console.log(data, "paz");
             setProducts(data);
         } catch (err) {
             console.error('שגיאה בטעינת מוצרים:', err);
@@ -25,7 +29,7 @@ export const ProductsProvider = ({ children }: { children: ReactNode }) => {
 
     const getProductById = async (id: string): Promise<Product | null> => {
         try {
-            const res = await fetch(`http://172.20.10.3:3000/products/${id}`);
+            const res = await fetch(`${Config.API_URL}/products/${id}`);
             if (!res.ok) throw new Error('שגיאה בטעינת מוצר לפי ID');
             const data = await res.json();
             return data;

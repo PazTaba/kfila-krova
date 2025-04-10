@@ -7,9 +7,10 @@ import { Feather } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Location from 'expo-location';
 import { useFocusEffect } from '@react-navigation/native';
-import { useProducts } from '../hooks/useProducts';
-import { useAnalytics } from '../hooks/useAnalytics';
-import { useLocation } from '../hooks/useLocation';
+import { useProducts } from '../../hooks/useProducts';
+import { useLocation } from '../../hooks/useLocation';
+import { Config } from '../../config/config';
+
 
 
 
@@ -73,7 +74,7 @@ export default function AddProductScreen({ navigation, route }: any) {
                 type: 'image/jpeg'
             } as any);
 
-            const response = await fetch('http://172.20.10.3:3000/products/add', {
+            const response = await fetch(`${Config.API_URL}/products/add`, {
                 method: 'POST',
                 headers: {
                     Authorization: `Bearer ${token}`,

@@ -1,7 +1,7 @@
 // src/contexts/AnalyticsContext.tsx
 import React, { createContext, useContext, useEffect } from 'react';
 import { AppState, AppStateStatus } from 'react-native';
-import AnalyticsService from '../services/analyticsService';
+import {analyticsService} from '../services/analyticsService';
 import { useUser } from '../hooks/useUser';
 import { useLocation } from '../hooks/useLocation';
 
@@ -25,19 +25,19 @@ export const AnalyticsProvider = ({ children }: { children: React.ReactNode }) =
     useEffect(() => {
         const handleAppStateChange = async (nextAppState: AppStateStatus) => {
             if (nextAppState === 'active') {
-                await AnalyticsService.startSession();
-                await AnalyticsService.syncPendingEvents();
+                await analyticsService.startSession();
+                await analyticsService.syncPendingEvents();
             } else if (nextAppState === 'background' || nextAppState === 'inactive') {
-                await AnalyticsService.endSession();
+                await analyticsService.endSession();
             }
         };
 
-        AnalyticsService.startSession();
+        analyticsService.startSession();
         const subscription = AppState.addEventListener('change', handleAppStateChange);
 
         return () => {
             subscription.remove();
-            AnalyticsService.endSession();
+            analyticsService.endSession();
         };
     }, []);
 
@@ -54,35 +54,35 @@ export const AnalyticsProvider = ({ children }: { children: React.ReactNode }) =
     }, [lastLocation?.latitude, lastLocation?.longitude]);
 
     const trackScreen = (screenName: string) => {
-        AnalyticsService.trackScreen(screenName);
+        analyticsService.trackScreen(screenName);
     };
 
     const trackSearch = (query: string, resultsCount: number) => {
-        AnalyticsService.trackSearch(query, resultsCount);
+        analyticsService.trackSearch(query, resultsCount);
     };
 
     const trackItemView = (itemId: string, itemType: string) => {
-        AnalyticsService.trackItemView(itemId, itemType);
+        analyticsService.trackItemView(itemId, itemType);
     };
 
     const trackFavorite = (itemId: string, itemType: string, isFavorite: boolean) => {
-        AnalyticsService.trackFavorite(itemId, itemType, isFavorite);
+        analyticsService.trackFavorite(itemId, itemType, isFavorite);
     };
 
     const trackContact = (targetId: string, contactType: 'phone' | 'whatsapp' | 'email') => {
-        AnalyticsService.trackContact(targetId, contactType);
+        analyticsService.trackContact(targetId, contactType);
     };
 
     const trackShare = (itemId: string, itemType: string, shareMethod?: string) => {
-        AnalyticsService.trackShare(itemId, itemType, shareMethod);
+        analyticsService.trackShare(itemId, itemType, shareMethod);
     };
 
     const trackLocationChange = (latitude: number, longitude: number) => {
-        AnalyticsService.trackLocationChange(latitude, longitude);
+        analyticsService.trackLocationChange(latitude, longitude);
     };
 
     const trackFilterApplied = (filters: Record<string, any>) => {
-        AnalyticsService.trackFilterApplied(filters);
+        analyticsService.trackFilterApplied(filters);
     };
 
     return (

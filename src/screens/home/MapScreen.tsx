@@ -1,9 +1,11 @@
 import React, { useCallback } from 'react';
 import { View, Text, StyleSheet, Image } from 'react-native';
 import MapView, { Marker, Callout, Region } from 'react-native-maps';
-import { useProducts } from '../hooks/useProducts';
-import { useLocation } from '../hooks/useLocation';
+import { useProducts } from '../../hooks/useProducts';
+import { useLocation } from '../../hooks/useLocation';
 import { useFocusEffect } from '@react-navigation/native';
+import { Config } from '../../config/config';
+
 
 const MapScreen = () => {
     const { products, fetchProducts } = useProducts();
@@ -39,7 +41,7 @@ const MapScreen = () => {
                     >
                         <Callout tooltip>
                             <View style={styles.callout}>
-                                <Image source={{ uri: `http://172.20.10.3:3000${product.image}` }} style={styles.image} />
+                                <Image source={{ uri: `${Config.API_URL}${product.image}` }} style={styles.image} />
                                 <Text style={styles.title}>{product.name}</Text>
                                 <Text style={styles.description}>₪{product.price} - {product.address}</Text>
                             </View>

@@ -1,12 +1,17 @@
+// CommunityScreen.tsx
 import React, { useState } from 'react';
-import { 
-  ScrollView, 
-  Text, 
-  View, 
-  StyleSheet, 
-  TouchableOpacity, 
-  Image 
+import {
+  Text,
+  View,
+  StyleSheet,
+  TouchableOpacity,
+  Image
 } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
+import { Feather } from '@expo/vector-icons';
+
+// Shared Components
+import ScreenTemplate from '../ScreenTemplate';
 
 // Sample community data
 const communityData = {
@@ -17,7 +22,7 @@ const communityData = {
       date: '15 באפריל, 19:00',
       location: 'מרכז קהילתי תל אביב',
       participants: 42,
-      image: require('../../assets/event1.jpg') // Replace with actual image path
+      image: require('../../../assets/event1.jpg') // Replace with actual image path
     },
     {
       id: 2,
@@ -25,7 +30,7 @@ const communityData = {
       date: '22 באפריל, 18:30',
       location: 'אולם וובינר מקוון',
       participants: 28,
-      image: require('../../assets/event2.jpg') // Replace with actual image path
+      image: require('../../../assets/event2.jpg') // Replace with actual image path
     }
   ],
   groups: [
@@ -50,29 +55,30 @@ const communityData = {
       name: 'אורי כהן',
       points: 1245,
       role: 'מתנדב מצטיין',
-      avatar: require('../../assets/avatar1.jpg') // Replace with actual avatar path
+      avatar: require('../../../assets/avatar1.jpg') // Replace with actual avatar path
     },
     {
       id: 2,
       name: 'שרה לוי',
       points: 1102,
       role: 'מנהיגת קהילה',
-      avatar: require('../../assets/avatar2.jpg') // Replace with actual avatar path
+      avatar: require('../../../assets/avatar2.jpg') // Replace with actual avatar path
     }
   ]
 };
 
 export default function CommunityScreen() {
-  const [activeSection, setActiveSection] = useState('events');
+  const navigation = useNavigation<any>();
+  const [activeTab, setActiveTab] = useState('events');
+  const [searchQuery, setSearchQuery] = useState('');
 
   const renderEvents = () => (
-    <View style={styles.sectionContainer}>
-      <Text style={styles.sectionTitle}>אירועים קרובים</Text>
+    <View>
       {communityData.events.map(event => (
-        <TouchableOpacity 
-          key={event.id} 
+        <TouchableOpacity
+          key={event.id}
           style={styles.eventCard}
-          onPress={() => {/* Navigate to event details */}}
+          onPress={() => navigation.navigate('CommunityDetails')}
         >
           <Image source={event.image} style={styles.eventImage} />
           <View style={styles.eventDetails}>
@@ -89,13 +95,12 @@ export default function CommunityScreen() {
   );
 
   const renderGroups = () => (
-    <View style={styles.sectionContainer}>
-      <Text style={styles.sectionTitle}>קבוצות קהילה</Text>
+    <View>
       {communityData.groups.map(group => (
-        <TouchableOpacity 
-          key={group.id} 
+        <TouchableOpacity
+          key={group.id}
           style={styles.groupCard}
-          onPress={() => {/* Navigate to group details */}}
+          onPress={() => {/* Navigate to group details */ }}
         >
           <Text style={styles.groupIcon}>{group.icon}</Text>
           <View style={styles.groupDetails}>
@@ -111,17 +116,16 @@ export default function CommunityScreen() {
   );
 
   const renderTopContributors = () => (
-    <View style={styles.sectionContainer}>
-      <Text style={styles.sectionTitle}>מתנדבים מובילים</Text>
+    <View>
       {communityData.topContributors.map(contributor => (
-        <TouchableOpacity 
-          key={contributor.id} 
+        <TouchableOpacity
+          key={contributor.id}
           style={styles.contributorCard}
-          onPress={() => {/* Navigate to contributor profile */}}
+          onPress={() => navigation.navigate('CommunityDetails')}
         >
-          <Image 
-            source={contributor.avatar} 
-            style={styles.contributorAvatar} 
+          <Image
+            source={contributor.avatar}
+            style={styles.contributorAvatar}
           />
           <View style={styles.contributorDetails}>
             <Text style={styles.contributorName}>{contributor.name}</Text>
@@ -135,89 +139,47 @@ export default function CommunityScreen() {
     </View>
   );
 
-  return (
-    <ScrollView style={styles.container}>
-      <Text style={styles.title}>👨‍👩‍👧‍👦 קהילה</Text>
-      
-      {/* Section Navigation */}
-      <View style={styles.sectionNavigation}>
-        <TouchableOpacity 
-          style={[
-            styles.navButton, 
-            activeSection === 'events' && styles.activeNavButton
-          ]}
-          onPress={() => setActiveSection('events')}
-        >
-          <Text style={styles.navButtonText}>אירועים</Text>
-        </TouchableOpacity>
-        <TouchableOpacity 
-          style={[
-            styles.navButton, 
-            activeSection === 'groups' && styles.activeNavButton
-          ]}
-          onPress={() => setActiveSection('groups')}
-        >
-          <Text style={styles.navButtonText}>קבוצות</Text>
-        </TouchableOpacity>
-        <TouchableOpacity 
-          style={[
-            styles.navButton, 
-            activeSection === 'contributors' && styles.activeNavButton
-          ]}
-          onPress={() => setActiveSection('contributors')}
-        >
-          <Text style={styles.navButtonText}>מובילים</Text>
-        </TouchableOpacity>
-      </View>
+  // Define tabs for the tabbed template
+  const tabs = [
+    {
+      key: 'events',
+      label: 'אירועים',
+      content: renderEvents
+    },
+    {
+      key: 'groups',
+      label: 'קבוצות',
+      content: renderGroups
+    },
+    {
+      key: 'contributors',
+      label: 'מובילים',
+      content: renderTopContributors
+    }
+  ];
 
-      {/* Render Active Section */}
-      {activeSection === 'events' && renderEvents()}
-      {activeSection === 'groups' && renderGroups()}
-      {activeSection === 'contributors' && renderTopContributors()}
-    </ScrollView>
+  return (
+    <ScreenTemplate
+      type="tabbed"
+      title="👨‍👩‍👧‍👦 קהילה"
+      searchValue={searchQuery}
+      onSearchChange={setSearchQuery}
+      searchPlaceholder="חפש בקהילה..."
+      tabs={tabs}
+      activeTab={activeTab}
+      onTabChange={setActiveTab}
+      onAddPress={() => navigation.navigate('AddCommunity')}
+      addButtonLabel="צור אירוע"
+      headerRight={
+        <TouchableOpacity onPress={() => navigation.navigate('CommunitySettings')}>
+          <Feather name="settings" size={24} color="#4A4A4A" style={{ marginLeft: 15 }} />
+        </TouchableOpacity>
+      }
+    />
   );
 }
 
 const styles = StyleSheet.create({
-  container: { 
-    flex: 1, 
-    padding: 16, 
-    backgroundColor: '#fff' 
-  },
-  title: { 
-    fontSize: 22, 
-    fontWeight: 'bold', 
-    marginBottom: 16, 
-    textAlign: 'right' 
-  },
-  sectionNavigation: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-    marginBottom: 16,
-  },
-  navButton: {
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    marginLeft: 8,
-    borderRadius: 20,
-    backgroundColor: '#f4f4f4',
-  },
-  activeNavButton: {
-    backgroundColor: '#007bff',
-  },
-  navButtonText: {
-    color: '#333',
-    fontWeight: 'bold',
-  },
-  sectionContainer: {
-    marginBottom: 16,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 12,
-    textAlign: 'right',
-  },
   eventCard: {
     flexDirection: 'row',
     backgroundColor: '#f9f9f9',

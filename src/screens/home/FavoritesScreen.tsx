@@ -15,7 +15,8 @@ import { Feather, Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Product } from '../types/Product';
+import { Product } from '../../types/Product';
+import { Config } from '../../config/config';
 
 function FavoritesScreen() {
     const navigation = useNavigation();
@@ -36,7 +37,7 @@ function FavoritesScreen() {
                 const enrichedFavorites = await Promise.all(
                     parsedFavorites.map(async (id: string) => {
                         try {
-                            const response = await fetch(`http://172.20.10.3:3000/products/${id}`);
+                            const response = await fetch(`${Config.API_URL}/products/${id}`);
                             const product = await response.json();
                             return { ...product, isFavorite: true };
                         } catch (error) {
@@ -102,8 +103,8 @@ function FavoritesScreen() {
             <Image
                 source={
                     product.image
-                        ? { uri: `http://172.20.10.3:3000${product.image}` }
-                        : require('../../assets/avatar1.jpg')
+                        ? { uri: `${Config.API_URL}${product.image}` }
+                        : require('../../../assets/avatar1.jpg')
                 }
                 style={styles.productImage}
             />

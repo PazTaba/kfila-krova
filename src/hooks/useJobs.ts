@@ -1,6 +1,6 @@
 // src/hooks/useJobs.ts
 import { useContext } from 'react';
-import { JobsContext } from '../contexts/JobsContext';
+import { JobsContext } from '../contexts/jobs/JobsContext';
 
 export const useJobs = () => {
   const context = useContext(JobsContext);

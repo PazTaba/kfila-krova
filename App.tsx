@@ -5,9 +5,9 @@ import { ActivityIndicator, View } from 'react-native';
 
 import { RootStackParamList } from './src/navigation/navigation-types';
 import MainTabNavigator from './src/navigation/MainTabNavigator';
-import MapScreen from './src/screens/MapScreen';
-import { LoginScreen } from './src/screens/LoginScreen';
-import { RegisterScreen } from './src/screens/RegisterScreen';
+import MapScreen from './src/screens/home/MapScreen';
+import { LoginScreen } from './src/screens/auth/LoginScreen';
+import { RegisterScreen } from './src/screens/auth/RegisterScreen';
 import { startBackgroundLocationUpdates } from './src/utils/backgroundLocation';
 
 // AppProvider החדש שמאגד את כל הקונטקסטים
@@ -51,7 +51,6 @@ const AppNavigator = () => {
   );
 };
 
-// עטיפת כל האפליקציה בקונטקסטים
 export default function App() {
   return (
     <AppProvider>

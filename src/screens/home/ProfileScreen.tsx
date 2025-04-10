@@ -11,9 +11,9 @@ import {
 } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
-import { RootStackParamList } from '../navigation/navigation-types';
-import { useUser } from '../hooks/useUser';
-import { useLocation } from '../hooks/useLocation';
+import { RootStackParamList } from '../../navigation/navigation-types';
+import { useUser } from '../../hooks/useUser';
+import { useLocation } from '../../hooks/useLocation';
 import { format } from 'date-fns';
 import { he } from 'date-fns/locale/he';
 
@@ -24,6 +24,8 @@ function ProfileScreen({ navigation }: ProfileScreenProps): React.JSX.Element {
     const { user } = useUser();
     console.log('📦 user from context:', user);
     const { lastLocation: location } = useLocation();
+    console.log(user?.profileImage || "",);
+
 
 
     if (!user) {
@@ -49,6 +51,7 @@ function ProfileScreen({ navigation }: ProfileScreenProps): React.JSX.Element {
             <ScrollView contentContainerStyle={styles.scrollContainer}>
                 <View style={styles.profileHeader}>
                     <Image
+                    
                         source={{ uri: user.profileImage || 'https://via.placeholder.com/150' }}
                         style={styles.profileImage}
                     />

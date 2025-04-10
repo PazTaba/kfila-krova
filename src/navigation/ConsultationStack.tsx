@@ -1,8 +1,8 @@
 import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import ConsultationScreen from '../screens/ConsultationScreen';
-import AddConsultationScreen from '../screens/AddConsultationScreen';
-import ConsultationDetailsScreen from '../screens/ConsultationDetailsScreen';
+import ConsultationScreen from '../screens/consultations/ConsultationScreen';
+import AddConsultationScreen from '../screens/consultations/AddConsultationScreen';
+import ConsultationDetailsScreen from '../screens/consultations/ConsultationDetailsScreen';
 import { ConsultationStackParamList } from './navigation-types';
 
 const Stack = createNativeStackNavigator<ConsultationStackParamList>();

@@ -11,6 +11,8 @@ import {
 import { Feather } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Config } from '../../config/config';
+
 
 export default function AddConsultationScreen() {
     const navigation = useNavigation<any>();
@@ -42,7 +44,7 @@ export default function AddConsultationScreen() {
         setIsLoading(true);
 
         try {
-            const response = await fetch('http://172.20.10.3:3000/consultations', {
+            const response = await fetch(`${Config.API_URL}/consultations`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

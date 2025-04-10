@@ -14,11 +14,12 @@ import { useRoute, useNavigation } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
     ConsultationDetailsScreenRouteProp,
-    ConsultationDetailsScreenNavigationProp,
     Answer,
-} from '../navigation/navigation-types';
+} from '../../navigation/navigation-types';
 
-import { useAnalytics } from '../hooks/useAnalytics'; // הוספה
+import { useAnalytics } from '../../hooks/useAnalytics'; // הוספה
+import { Config } from '../../config/config';
+
 
 
 
@@ -27,7 +28,7 @@ import { useAnalytics } from '../hooks/useAnalytics'; // הוספה
 export default function ConsultationDetailsScreen() {
     const { trackScreen, trackItemView, trackFavorite } = useAnalytics(); // הוספה
     const route = useRoute<ConsultationDetailsScreenRouteProp>();
-    const navigation = useNavigation<ConsultationDetailsScreenNavigationProp>();
+    const navigation = useNavigation<any>();
     const { consultation } = route.params;
 
     const [newAnswer, setNewAnswer] = useState('');
@@ -60,7 +61,7 @@ export default function ConsultationDetailsScreen() {
 
         setIsSubmitting(true);
         try {
-            const response = await fetch(`http://172.20.10.3:3000/consultations/${consultation._id}/answers`, {
+            const response = await fetch(`${Config.API_URL}/consultations/${consultation._id}/answers`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -95,7 +96,7 @@ export default function ConsultationDetailsScreen() {
         setIsLiking(prev => ({ ...prev, [answerId]: true }));
 
         try {
-            const response = await fetch(`http://172.20.10.3:3000/consultations/${consultation._id}/answers/${answerId}/like`, {
+            const response = await fetch(`${Config.API_URL}/consultations/${consultation._id}/answers/${answerId}/like`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

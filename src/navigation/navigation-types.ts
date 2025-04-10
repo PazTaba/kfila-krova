@@ -26,6 +26,12 @@ export interface RegisterRequestBody {
     phoneNumber?: string;
 }
 
+export interface CommunityStackParamList {
+    Community: undefined;
+
+}
+
+
 /* ========== Answer Object Type ========== */
 export type Answer = {
     id: string;
@@ -72,6 +78,10 @@ export type RootStackParamList = {
     ConsultationStack: undefined;
     ConsultationDetails: { consultation: Consultation };
     SlideHomeStack: undefined;
+    Community: undefined;
+    AddCommunity: undefined;
+    CommunityDetails: undefined;
+
 };
 
 /* ========== ConsultationStackParamList ========== */

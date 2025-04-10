@@ -1,9 +1,9 @@
 import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
-import JobsScreen from '../screens/JobsScreen';
-import AddJobScreen from '../screens/AddJobScreen';
-import JobDetailsScreen from '../screens/JobDetailsScreen';
+import JobsScreen from '../screens/jobs/JobsScreen';
+import AddJobScreen from '../screens/jobs/AddJobScreen';
+import JobDetailsScreen from '../screens/jobs/JobDetailsScreen';
 
 export type MarketplaceStackParamList = {
     Job: undefined;

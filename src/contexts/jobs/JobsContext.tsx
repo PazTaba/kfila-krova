@@ -1,6 +1,8 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { Job } from '../types/Jobs';
-import { useUser } from '../hooks/useUser';
+import { Job } from '../../types/Jobs';
+import { useUser } from '../../hooks/useUser';
+
+
 
 interface JobsContextType {
     jobs: Job[];
@@ -33,7 +35,7 @@ export const JobsProvider = ({ children }: { children: React.ReactNode }) => {
     const likeJob = (jobId: string) => {
         setJobs(prev =>
             prev.map(job =>
-                job.id === jobId
+                job._id === jobId
                     ? {
                         ...job,
                         likedBy: job.likedBy?.includes('me')
@@ -49,7 +51,7 @@ export const JobsProvider = ({ children }: { children: React.ReactNode }) => {
     const saveJob = (jobId: string) => {
         setJobs(prev =>
             prev.map(job =>
-                job.id === jobId
+                job._id === jobId
                     ? {
                         ...job,
                         savedBy: job.savedBy?.includes('me')
@@ -64,7 +66,7 @@ export const JobsProvider = ({ children }: { children: React.ReactNode }) => {
     const rateJob = (jobId: string, rating: number, feedback?: string) => {
         setJobs(prev =>
             prev.map(job =>
-                job.id === jobId
+                job._id === jobId
                     ? {
                         ...job,
                         ratings: [

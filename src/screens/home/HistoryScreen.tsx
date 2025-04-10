@@ -15,12 +15,13 @@ import { Feather, Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Product } from '../types/Product';
+import { Product } from '../../types/Product';
+import { Config } from '../../config/config';
 
 
 function HistoryScreen() {
     const navigation = useNavigation();
-    const [history, setHistory] = useState([]);
+    const [history, setHistory] = useState<any>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [favorites, setFavorites] = useState([]);
 
@@ -40,7 +41,7 @@ function HistoryScreen() {
                 const enrichedHistory = await Promise.all(
                     parsedHistory.map(async (item: Product) => {
                         try {
-                            const response = await fetch(`http://172.20.10.3:3000/products/${item.productId}`);
+                            const response = await fetch(`${Config.API_URL}/products/${item._id}`);
                             const product = await response.json();
                             return {
                                 ...product,
@@ -180,7 +181,7 @@ function HistoryScreen() {
             onPress={() => navigation.navigate('Product', { productId: product._id })}
         >
             <Image
-                source={{ uri: `http://172.20.10.3:3000${product.image}` }}
+                source={{ uri: `${Config.API_URL}${product.image}` }}
                 style={styles.productImage}
             />
 

@@ -1,8 +1,8 @@
 import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import MarketplaceScreen from '../screens/MarketplaceScreen';
-import AddProductScreen from '../screens/AddProductScreen';
-import ProductDetailsScreen from '../screens/ProductDetailsScreen';
+import MarketplaceScreen from '../screens/marketplace/MarketplaceScreen';
+import AddProductScreen from '../screens/marketplace/AddProductScreen';
+import ProductDetailsScreen from '../screens/marketplace/ProductDetailsScreen';
 
 export type MarketplaceStackParamList = {
   Marketplace: undefined;
