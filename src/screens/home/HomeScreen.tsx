@@ -1,4 +1,3 @@
-// HomeScreen.tsx
 import React, { useState, useEffect, useCallback } from 'react';
 import {
   SafeAreaView,
@@ -6,13 +5,15 @@ import {
   View,
   Alert,
   Animated,
-  TouchableOpacity
+  TouchableOpacity,
+  Text,
+  Switch,
 } from 'react-native';
 import MapView, { Circle } from 'react-native-maps';
 import * as Location from 'expo-location';
 import { useFocusEffect } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Feather } from '@expo/vector-icons';
+import { Feather, FontAwesome } from '@expo/vector-icons';
 
 // Components
 import ScreenTemplate from '../ScreenTemplate';
@@ -34,7 +35,16 @@ import { useLocation } from '../../hooks/useLocation';
 import { useAnalytics } from '../../hooks/useAnalytics';
 import { userAnalytics, EventType } from '../../utils/userAnalytics';
 import { updateUserLocation } from '../../utils/updateUserLocation';
-import styles from '../../components/homeScreenStyles'
+import styles from '../../components/homeScreenStyles';
+import { Config } from '../../config/config';
+
+// Define content filter type for the toggles
+type ContentFilters = {
+  products: boolean;
+  jobs: boolean;
+  consultations: boolean;
+  help: boolean;
+};
 
 function HomeScreen({ navigation }: any) {
   // State
@@ -48,6 +58,15 @@ function HomeScreen({ navigation }: any) {
   const [actionPanelAnim] = useState(new Animated.Value(100));
   const [selectedSort, setSelectedSort] = useState('distance');
   const [filteredProducts, setFilteredProducts] = useState<any>([]);
+  const [consultations, setConsultations] = useState([]);
+  const [helpRequests, setHelpRequests] = useState([]);
+  const [showContentFilters, setShowContentFilters] = useState(false);
+  const [contentFilters, setContentFilters] = useState<ContentFilters>({
+    products: true,
+    jobs: true,
+    consultations: true,
+    help: true
+  });
 
   // Hooks
   const { jobs, fetchJobs } = useJobs();
@@ -71,6 +90,8 @@ function HomeScreen({ navigation }: any) {
     useCallback(() => {
       fetchProducts();
       fetchJobs();
+      fetchConsultations();
+      fetchHelpRequests();
     }, [])
   );
 
@@ -101,7 +122,32 @@ function HomeScreen({ navigation }: any) {
 
   useEffect(() => {
     filterProducts();
-  }, [products, searchQuery, selectedCategories, matchRadius]);
+  }, [products, searchQuery, selectedCategories, matchRadius, contentFilters]);
+
+  // ========= API Calls =========
+  const fetchConsultations = async () => {
+    try {
+      const response = await fetch(`${Config.API_URL}/consultations`);
+      if (response.ok) {
+        const data = await response.json();
+        setConsultations(data);
+      }
+    } catch (error) {
+      console.error('Error fetching consultations:', error);
+    }
+  };
+
+  const fetchHelpRequests = async () => {
+    try {
+      const response = await fetch(`${Config.API_URL}/help-requests`);
+      if (response.ok) {
+        const data = await response.json();
+        setHelpRequests(data);
+      }
+    } catch (error) {
+      console.error('Error fetching help requests:', error);
+    }
+  };
 
   // ========= Handlers =========
   const handleLogout = async () => {
@@ -130,6 +176,7 @@ function HomeScreen({ navigation }: any) {
 
   const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen);
   const toggleActionPanel = () => setShowActionPanel(!showActionPanel);
+  const toggleContentFilters = () => setShowContentFilters(!showContentFilters);
 
   const toggleCategory = (category: string) => {
     if (category === 'all') {
@@ -143,6 +190,13 @@ function HomeScreen({ navigation }: any) {
         setSelectedCategories([...filtered, category]);
       }
     }
+  };
+
+  const toggleContentFilter = (key: keyof ContentFilters) => {
+    setContentFilters(prev => ({
+      ...prev,
+      [key]: !prev[key]
+    }));
   };
 
   const filterProducts = () => {
@@ -177,14 +231,81 @@ function HomeScreen({ navigation }: any) {
     setFilteredProducts(filtered);
   };
 
-  const getNearbyProducts = () => {
-    if (!lastLocation) return [];
-    return filteredProducts;
-  };
+  const getNearbyItems = () => {
+    if (!lastLocation) return 0;
 
-  // ========= Render Functions =========
+    let count = 0;
+
+    // Count products if enabled
+    if (contentFilters.products) {
+      count += filteredProducts.length;
+    }
+
+    // Count jobs if enabled
+    if (contentFilters.jobs && jobs) {
+      // Filter jobs by distance
+      const jobsInRadius = jobs.filter(job => {
+        if (!job.latitude || !job.longitude) return false;
+
+        const haversine = require('haversine-distance');
+        const distance = haversine(
+          { lat: lastLocation.latitude, lon: lastLocation.longitude },
+          { lat: job.latitude, lon: job.longitude }
+        ) / 1000;
+        return distance <= matchRadius;
+      });
+      count += jobsInRadius.length;
+    }
+
+    // Count consultations if enabled
+    if (contentFilters.consultations && consultations) {
+      // Filter consultations by distance
+      const consultationsInRadius = consultations.filter((consultation: any) => {
+        if (!consultation.location?.latitude || !consultation.location?.longitude) return false;
+
+        const haversine = require('haversine-distance');
+        const distance = haversine(
+          { lat: lastLocation.latitude, lon: lastLocation.longitude },
+          { lat: consultation.location.latitude, lon: consultation.location.longitude }
+        ) / 1000;
+        return distance <= matchRadius;
+      });
+      count += consultationsInRadius.length;
+    }
+
+    // Count help requests if enabled
+    if (contentFilters.help && helpRequests) {
+      // Filter help requests by distance
+      const helpInRadius = helpRequests.filter((help: any) => {
+        if (!help.location?.latitude || !help.location?.longitude) return false;
+
+        const haversine = require('haversine-distance');
+        const distance = haversine(
+          { lat: lastLocation.latitude, lon: lastLocation.longitude },
+          { lat: help.location.latitude, lon: help.location.longitude }
+        ) / 1000;
+        return distance <= matchRadius;
+      });
+      count += helpInRadius.length;
+    }
+
+    return count;
+  };
   const renderMapSection = () => {
     if (!lastLocation) return null;
+
+    // Apply content type filters
+    const filteredJobs = contentFilters.jobs ? jobs.filter((job: any) => {
+      return job.latitude && job.longitude;
+    }) : [];
+
+    const filteredConsultations = contentFilters.consultations ? consultations.filter((consultation: any) => {
+      return consultation.location?.latitude && consultation.location?.longitude;
+    }) : [];
+
+    const filteredHelpRequests = contentFilters.help ? helpRequests.filter((help: any) => {
+      return help.location?.latitude && help.location?.longitude;
+    }) : [];
 
     return (
       <MapView
@@ -206,16 +327,23 @@ function HomeScreen({ navigation }: any) {
           fillColor="rgba(108, 92, 231, 0.15)"
           strokeWidth={1}
         />
-        <MapMarkers products={filteredProducts} navigation={navigation} />
+        <MapMarkers
+          products={contentFilters.products ? filteredProducts : []}
+          jobs={filteredJobs}
+          consultations={filteredConsultations}
+          navigation={navigation}
+        />
       </MapView>
     );
   };
 
   const renderMapOverlays = () => {
+    const nearbyItemsCount = getNearbyItems();
+
     return (
       <>
-        {getNearbyProducts().length > 0 && (
-          <MatchBanner count={getNearbyProducts().length} />
+        {nearbyItemsCount > 0 && (
+          <MatchBanner count={nearbyItemsCount} />
         )}
 
         <ActionButton
@@ -257,7 +385,7 @@ function HomeScreen({ navigation }: any) {
         isLoading={isLoading}
         searchValue={searchQuery}
         onSearchChange={setSearchQuery}
-        searchPlaceholder="חפש מוצרים..."
+        searchPlaceholder="חפש תוכן..."
         renderMap={renderMapSection}
         renderOverlays={renderMapOverlays}
         headerRight={
@@ -301,5 +429,61 @@ function HomeScreen({ navigation }: any) {
     </>
   );
 }
+
+// Add new styles to the styles from homeScreenStyles
+const homeStyles = {
+  contentFiltersButton: {
+    position: 'absolute',
+    bottom: 170,
+    left: 20,
+    backgroundColor: '#6C5CE7',
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 4,
+  },
+  contentFiltersPanel: {
+    position: 'absolute',
+    bottom: 220,
+    left: 20,
+    backgroundColor: 'white',
+    borderRadius: 12,
+    padding: 16,
+    width: 200,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 6,
+    elevation: 5,
+  },
+  contentFilterTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginBottom: 12,
+    textAlign: 'center',
+  },
+  contentFilterRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  contentFilterLabel: {
+    fontSize: 14,
+    color: '#333',
+  }
+};
+
+// Merge in our new styles with the existing styles
+const combinedStyles = {
+  ...styles,  // Original styles from homeScreenStyles
+  ...homeStyles  // Our new additional styles
+};
 
 export default HomeScreen;

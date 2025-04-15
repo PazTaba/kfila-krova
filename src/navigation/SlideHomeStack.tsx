@@ -11,6 +11,7 @@ import ProductDetailsScreen from '../screens/marketplace/ProductDetailsScreen';
 import FavoritesScreen from '../screens/home/FavoritesScreen';
 import HistoryScreen from '../screens/home/HistoryScreen';
 import AddProductScreen from '../screens/marketplace/AddProductScreen';
+import ConsultationDetailsScreen from '../screens/consultations/ConsultationDetailsScreen';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
@@ -20,6 +21,8 @@ export default function SlideHomeStack() {
     <Stack.Navigator initialRouteName="Home" screenOptions={{ headerShown: false }}>
       <Stack.Screen name="Home" component={HomeScreen} />
       <Stack.Screen name="Product" component={ProductDetailsScreen} />
+      <Stack.Screen name="ConsultationDetails" component={ConsultationDetailsScreen} />
+
       <Stack.Screen name="AddProduct" component={AddProductScreen} />
       <Stack.Screen name="Favorites" component={FavoritesScreen} />
       <Stack.Screen name="Profile" component={ProfileScreen} />

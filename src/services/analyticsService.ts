@@ -1,4 +1,4 @@
-// ✅ analyticsService.ts - גרסה פונקציונלית
+
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Platform, Dimensions } from 'react-native';

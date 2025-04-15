@@ -1,7 +1,7 @@
 // src/contexts/AnalyticsContext.tsx
 import React, { createContext, useContext, useEffect } from 'react';
 import { AppState, AppStateStatus } from 'react-native';
-import {analyticsService} from '../services/analyticsService';
+import {analyticsService} from '../services/AnalyticsService';
 import { useUser } from '../hooks/useUser';
 import { useLocation } from '../hooks/useLocation';
 

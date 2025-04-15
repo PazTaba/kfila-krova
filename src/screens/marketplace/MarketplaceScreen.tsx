@@ -7,7 +7,7 @@ import { Feather } from '@expo/vector-icons';
 import { useCategories } from '../../hooks/useCategories';
 import { useProducts } from '../../hooks/useProducts';
 import { useAnalytics } from '../../hooks/useAnalytics';
-import {analyticsService} from '../../services/analyticsService';
+import {analyticsService} from '../../services/AnalyticsService';
 
 import ScreenTemplate from '../ScreenTemplate';
 

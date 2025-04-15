@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';  // הוספת useEffect
+import React, { useState, useEffect } from 'react';
 import {
     View,
     Text,
@@ -7,12 +7,14 @@ import {
     TouchableOpacity,
     Alert,
     Platform,
+    ScrollView,
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Config } from '../../config/config';
-
+import { useLocation } from '../../hooks/useLocation';
+import * as Location from 'expo-location';
 
 export default function AddConsultationScreen() {
     const navigation = useNavigation<any>();
@@ -20,9 +22,11 @@ export default function AddConsultationScreen() {
     const [category, setCategory] = useState('');
     const [description, setDescription] = useState('');
     const [isLoading, setIsLoading] = useState(false);
-    const [userName, setUserName] = useState<string>('');  // הוספת שדה userName
+    const [userName, setUserName] = useState<string>('');
+    const { lastLocation } = useLocation();
+    const [useCurrentLocation, setUseCurrentLocation] = useState(true);
 
-    // קבלת שם המשתמש מ-AsyncStorage בטעינת המסך
+    // Get user data when screen loads
     useEffect(() => {
         const getUserData = async () => {
             const userData = await AsyncStorage.getItem('userData');
@@ -44,6 +48,15 @@ export default function AddConsultationScreen() {
         setIsLoading(true);
 
         try {
+            // Get current location if enabled
+            let locationData = null;
+            if (useCurrentLocation && lastLocation) {
+                locationData = {
+                    latitude: lastLocation.latitude,
+                    longitude: lastLocation.longitude,
+                };
+            }
+
             const response = await fetch(`${Config.API_URL}/consultations`, {
                 method: 'POST',
                 headers: {
@@ -54,11 +67,8 @@ export default function AddConsultationScreen() {
                     question,
                     category,
                     description,
-                    location: {
-                        latitude: 0,
-                        longitude: 0,
-                    },
-                    author: userName,  // שימוש בשם המשתמש כ-author
+                    location: locationData,
+                    author: userName,
                 }),
             });
 
@@ -76,6 +86,23 @@ export default function AddConsultationScreen() {
             setIsLoading(false);
         }
     };
+
+    const toggleLocationUsage = () => {
+        // If enabling location, check permission
+        if (!useCurrentLocation) {
+            (async () => {
+                const { status } = await Location.requestForegroundPermissionsAsync();
+                if (status !== 'granted') {
+                    Alert.alert('הרשאה נדרשת', 'על מנת להשתמש במיקום הנוכחי, יש לאשר גישה למיקום');
+                    return;
+                }
+                setUseCurrentLocation(true);
+            })();
+        } else {
+            setUseCurrentLocation(false);
+        }
+    };
+
     return (
         <View style={styles.container}>
             <View style={styles.header}>
@@ -85,7 +112,7 @@ export default function AddConsultationScreen() {
                 <Text style={styles.headerTitle}>שאל שאלה חדשה</Text>
             </View>
 
-            <View style={styles.formContainer}>
+            <ScrollView style={styles.formContainer}>
                 <View style={styles.inputContainer}>
                     <TextInput
                         style={styles.input}
@@ -121,6 +148,32 @@ export default function AddConsultationScreen() {
                     />
                 </View>
 
+                {/* Location Option */}
+                <View style={styles.locationContainer}>
+                    <TouchableOpacity
+                        style={styles.locationToggle}
+                        onPress={toggleLocationUsage}
+                    >
+                        <View style={[
+                            styles.toggleButton,
+                            useCurrentLocation ? styles.toggleActive : styles.toggleInactive
+                        ]}>
+                            <View style={[
+                                styles.toggleCircle,
+                                useCurrentLocation ? styles.toggleCircleActive : styles.toggleCircleInactive
+                            ]} />
+                        </View>
+                        <Text style={styles.locationText}>
+                            {useCurrentLocation ? 'שתף את המיקום הנוכחי שלי' : 'לא לשתף מיקום'}
+                        </Text>
+                    </TouchableOpacity>
+                    {useCurrentLocation && lastLocation && (
+                        <Text style={styles.locationDetails}>
+                            מיקום: {lastLocation.latitude.toFixed(5)}, {lastLocation.longitude.toFixed(5)}
+                        </Text>
+                    )}
+                </View>
+
                 <TouchableOpacity
                     style={styles.addButton}
                     onPress={handleAddConsultation}
@@ -135,7 +188,7 @@ export default function AddConsultationScreen() {
                         </>
                     )}
                 </TouchableOpacity>
-            </View>
+            </ScrollView>
         </View>
     );
 }
@@ -189,6 +242,58 @@ const styles = StyleSheet.create({
         fontSize: 16,
         color: '#4A4A4A',
     },
+    locationContainer: {
+        backgroundColor: 'white',
+        borderRadius: 10,
+        padding: 15,
+        marginBottom: 20,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 3,
+        elevation: 2,
+    },
+    locationToggle: {
+        flexDirection: 'row-reverse',
+        alignItems: 'center',
+        justifyContent: 'flex-start',
+    },
+    toggleButton: {
+        width: 50,
+        height: 30,
+        borderRadius: 15,
+        padding: 2,
+        marginLeft: 10,
+    },
+    toggleActive: {
+        backgroundColor: '#4A90E2',
+    },
+    toggleInactive: {
+        backgroundColor: '#E0E0E0',
+    },
+    toggleCircle: {
+        width: 26,
+        height: 26,
+        borderRadius: 13,
+    },
+    toggleCircleActive: {
+        backgroundColor: 'white',
+        alignSelf: 'flex-end',
+    },
+    toggleCircleInactive: {
+        backgroundColor: 'white',
+        alignSelf: 'flex-start',
+    },
+    locationText: {
+        fontSize: 16,
+        color: '#4A4A4A',
+    },
+    locationDetails: {
+        fontSize: 14,
+        color: '#7A7A7A',
+        marginTop: 10,
+        textAlign: 'right',
+    },
     addButton: {
         backgroundColor: '#4A90E2',
         paddingVertical: 15,
@@ -203,6 +308,7 @@ const styles = StyleSheet.create({
         shadowRadius: 5,
         elevation: 5,
         marginTop: 10,
+        marginBottom: 30,
     },
     addButtonText: {
         color: 'white',

@@ -33,6 +33,7 @@ export default function ConsultationDetailsScreen() {
 
     const [newAnswer, setNewAnswer] = useState('');
     const [answers, setAnswers] = useState<Answer[]>(consultation.answers || []);
+
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [userName, setUserName] = useState<string>('');
     const [isLiking, setIsLiking] = useState<{ [key: string]: boolean }>({});

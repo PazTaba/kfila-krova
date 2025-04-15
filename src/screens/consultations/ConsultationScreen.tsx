@@ -6,8 +6,7 @@ import { Consultation } from '../../navigation/navigation-types';
 import { useCategories } from '../../hooks/useCategories';
 import ScreenTemplate from '../ScreenTemplate';
 
-export default function ConsultationScreen() {
-    const navigation = useNavigation<any>();
+export default function ConsultationScreen({ navigation }: any) {
     const [searchTerm, setSearchTerm] = useState('');
     const [consultations, setConsultations] = useState<Consultation[]>([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -48,9 +47,10 @@ export default function ConsultationScreen() {
                 return {
                     ...consultation,
                     answers: topTwoAnswers,
-                    allAnswers: allAnswers
+                    allAnswers, // שדה זמני רק לצורך ניווט למסך פרטים
                 };
             });
+
 
             setConsultations(processedConsultations);
             setError(null);
@@ -68,13 +68,14 @@ export default function ConsultationScreen() {
     }, []);
 
     const openConsultationDetails = (consultation: Consultation) => {
-        navigation.navigate('ConsultationDetails', {
-            consultation: {
-                ...consultation,
-                answers: consultation.answers || consultation.answers
-            }
-        });
+        const temp = {
+            ...consultation,
+            answers: (consultation as any).allAnswers ?? consultation.answers, // 👈 פתרון זמני
+        };
+
+        navigation.navigate('ConsultationDetails', { consultation: temp });
     };
+
 
     const filteredConsultations = consultations.filter((consultation) => {
         const matchesSearch = consultation.question.toLowerCase().includes(searchTerm.toLowerCase());
@@ -149,7 +150,7 @@ export default function ConsultationScreen() {
         ));
 
     };
-    
+
     const allCategories = [
         { _id: 'all', name: 'הכל', icon: '🌐', color: '#4A90E2' },
         ...categories
